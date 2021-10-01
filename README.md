@@ -3,7 +3,7 @@
 Usages are similar to original.
 
 ## Installation
-```s
+```
 npm install djs.ext.commands
 ```
 
