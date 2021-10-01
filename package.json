@@ -1,0 +1,34 @@
+{
+	"name": "djs.ext.commands",
+	"description": "Imitation of discord.ext.commands written in TypeScript",
+	"version": "0.1.0",
+	"author": "andjsrk",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/andjsrk/djs.ext.commands.git"
+	},
+	"homepage": "https://github.com/andjsrk/djs.ext.commands",
+	"keywords": [
+		"discord.ext.commands",
+		"discord",
+		"bot"
+	],
+	"scripts": {
+		"build": "tsc"
+	},
+	"devDependencies": {
+		"typescript": "^4.4.3"
+	},
+	"dependencies": {
+		"discord.js": "13.1.0"
+	},
+	"engines": {
+		"node": ">=16.6.0"
+	},
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
+	]
+}
