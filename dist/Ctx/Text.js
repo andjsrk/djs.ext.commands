@@ -102,12 +102,12 @@ class Text extends Base_1.default {
             ? { content }
             : content instanceof discord_js_1.MessageEmbed
                 ? { embeds: [content] }
-                : typeof content === 'object'
+                : typeof content === 'object' && content !== null
                     ? content
                     : (() => { throw new TypeError('invalid type'); })();
         const sendOption = typeof content === 'string' || content instanceof discord_js_1.MessageEmbed
             ? option
-            : typeof content === 'object'
+            : typeof content === 'object' && content !== null
                 ? content
                 : (() => { throw new TypeError(); })();
         const sentMsg = await this.channel.send(dSendOption);

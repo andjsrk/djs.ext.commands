@@ -25,7 +25,7 @@ class BaseSlash extends Base_1.default {
                 else {
                     for (let i = 0; i < option.argDefinitions.length; i++) {
                         const argDefinition = option.argDefinitions[i];
-                        if (typeof argDefinition !== 'object') {
+                        if (typeof argDefinition !== 'object' || argDefinition === null) {
                             throw new TypeError(`type of definition of argument at ${i} is not object`);
                         }
                         else if (!('name' in argDefinition)) {
