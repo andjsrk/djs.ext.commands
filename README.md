@@ -33,6 +33,10 @@ bot.run('TOKEN')
 ```
 You can find more examples in the examples directory.
 
+## Decorator?
+Basically, JavaScript doesn't support decorator syntax. \
+If you want to use decorator syntax, you should use [Babel](https://babeljs.io/docs/en/babel-plugin-proposal-decorators) or [TypeScript](https://www.typescriptlang.org/docs/handbook/decorators.html), etc.
+
 ## Difference with discord.ext.commands
 
 ### Class syntax is recommended
