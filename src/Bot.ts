@@ -34,7 +34,6 @@ export default class Bot extends BotEventManager {
 	public channels: Array<Channel>
 	constructor(option: BotInitOption = {}) {
 		super({ intents: option.intents })
-		this.client.shard?.broadcastEval
 		if (option.prefix !== undefined && typeof option.prefix !== 'string') {
 			throw new TypeError('type of prefix is not string')
 		} else {
