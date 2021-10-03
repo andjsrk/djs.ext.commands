@@ -124,7 +124,7 @@ export default class Bot extends BotEventManager {
 		if (listenerName === undefined) {
 			const eventName = first as keyof BotEvents
 			return (bot: Bot, _listenerName: string) => {
-				bot.addListener((bot[_listenerName as keyof typeof bot] as (...args: Array<any>) => any).bind(this), eventName)
+				bot.addListener((bot[_listenerName as keyof typeof bot] as (...args: Array<any>) => any).bind(bot), eventName)
 			}
 		} else {
 			const bot = first as Bot
@@ -132,7 +132,7 @@ export default class Bot extends BotEventManager {
 				throw new Error('name of listener is not starting with \'on\'')
 			} else {
 				const eventName = listenerName.replace(/^on([A-Z])/, (_, $1) => $1.toLowerCase()) as keyof BotEvents
-				bot.addListener((bot[listenerName as keyof typeof bot] as (...args: Array<any>) => any).bind(this), eventName)
+				bot.addListener((bot[listenerName as keyof typeof bot] as (...args: Array<any>) => any).bind(bot), eventName)
 			}
 		}
 	}
@@ -144,7 +144,7 @@ export default class Bot extends BotEventManager {
 					name: option.name ?? listenerName,
 					aliases: option.aliases ?? [],
 					argTypes: option.argTypes,
-					callback: (bot[listenerName as keyof typeof bot] as (...args: Array<any>) => any).bind(this),
+					callback: (bot[listenerName as keyof typeof bot] as (...args: Array<any>) => any).bind(bot),
 				})
 			)
 		}
@@ -159,7 +159,7 @@ export default class Bot extends BotEventManager {
 					description: option.description,
 					argDefinitions: option.argDefinitions,
 					noSubCommand: option.noSubCommand,
-					callback: (bot[listenerName as keyof typeof bot] as (...args: Array<any>) => any).bind(this),
+					callback: (bot[listenerName as keyof typeof bot] as (...args: Array<any>) => any).bind(bot),
 				})
 			)
 		}
@@ -182,7 +182,7 @@ export default class Bot extends BotEventManager {
 							description: option.description,
 							argDefinitions: option.argDefinitions,
 							mainCommand: foundCommand,
-							callback: (bot[listenerName as keyof typeof bot] as (...args: Array<any>) => any).bind(this),
+							callback: (bot[listenerName as keyof typeof bot] as (...args: Array<any>) => any).bind(bot),
 						})
 					)
 				}
