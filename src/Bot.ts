@@ -3,7 +3,7 @@ import {
 	Client, Collection, DMChannel, Guild, GuildChannel, GuildEmoji, Invite, Message, User,
 	MessageMentionOptions, PresenceData, Snowflake, TextBasedChannels,
 } from 'discord.js'
-import BotEventManager, { BotEvents, BotEventListenerMethodName } from './BotEventManager'
+import BotEventManager, { BotEvents, BotEventListenerMethodName, BOT_EVENT_NAMES } from './BotEventManager'
 import * as Ctx from './Ctx'
 import * as Command from './Command'
 import { TextCommandInitOption } from './Command/Text'
@@ -30,6 +30,12 @@ export interface BotInitOption {
 }
 export default class Bot extends BotEventManager {
 	public readonly prefix: string
+	protected readonly _eventWaiters: {
+		[K in keyof BotEvents]?: Array<{
+			check: ((...args: BotEvents[K]) => boolean) | undefined
+			resolve: (...args: BotEvents[K]) => void
+		}>
+	}
 	public readonly cachedMessages: WeakReadonlyArray<Message>
 	public commands: Array<Command.Text | Command.Slash> // decorators are must able to assign before init
 	public readonly channels: Array<Exclude<GuildChannel, DMChannel>>
@@ -403,5 +409,56 @@ export default class Bot extends BotEventManager {
 		} else {
 			await this.client.login(token)
 		}
+	}
+	public waitFor<K extends keyof BotEvents>(eventName: K, option: {
+		check?: (...args: BotEvents[K]) => boolean
+		timeout?: number
+	} = {}): Promise<BotEvents[K]> {
+		return new Promise((resolve, reject) => {
+			if (!BOT_EVENT_NAMES.includes(eventName)) {
+				reject(new Error(`invalid event name: ${eventName}`))
+			} else if (typeof option !== 'object' || option === null) {
+				throw new TypeError('type of option is not object')
+			} else if (option.check !== undefined && typeof option.check !== 'function') {
+				throw new TypeError('type of option.check is not function')
+			} else if (option.timeout !== undefined && typeof option.timeout !== 'number') {
+				throw new TypeError('type of option.timeout is not number')
+			} else {
+				const waiter = {
+					check: option.check,
+					resolve: (..._: BotEvents[K]) => {},
+				}
+				this._eventWaiters[eventName] ??= []
+				const nonUndefinedEventWaiters = this._eventWaiters[eventName]!
+				nonUndefinedEventWaiters.push(waiter)
+				if (option.timeout !== undefined) {
+					const timeout = setTimeout(() => {
+						nonUndefinedEventWaiters.splice(nonUndefinedEventWaiters.indexOf(waiter), 1)
+						reject(new Error('timed out'))
+					}, option.timeout)
+					waiter.resolve = (...args: BotEvents[K]) => {
+						clearTimeout(timeout)
+						resolve(args)
+					}
+				} else {
+					waiter.resolve = (...args: BotEvents[K]) => {
+						resolve(args)
+					}
+				}
+				const listener = (...args: BotEvents[K]) => {
+					if (waiter.check !== undefined) {
+						if (waiter.check(...args)) {
+							waiter.resolve(...args)
+						}
+					} else {
+						waiter.resolve(...args)
+					}
+				}
+				this.addListener((...args) => {
+					this.removeListener(listener, eventName)
+					listener(...args)
+				}, eventName)
+			}
+		})
 	}
 }
