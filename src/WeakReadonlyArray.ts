@@ -15,7 +15,6 @@ export default class WeakReadonlyArray <T = any> {
 					get: () => {
 						return this._array[iInIteration]
 					},
-					writable: false,
 				})
 			}
 		}
