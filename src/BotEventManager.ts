@@ -72,8 +72,7 @@ export default abstract class BotEventManager extends ClientManager {
 		if (typeof listener !== 'function') {
 			throw new TypeError('type of listener is not function')
 		} else {
-			eventName ??= listener.name as K
-			this.client.on(eventName, listener)
+			this.client.on(eventName ?? listener.name as K, listener)
 		}
 	}
 	public addListener<K extends keyof BotEvents>(listener: ((...args: BotEvents[K]) => any) & { name: K }): void
@@ -82,13 +81,13 @@ export default abstract class BotEventManager extends ClientManager {
 		if (typeof listener !== 'function') {
 			throw new TypeError('type of listener is not function')
 		} else {
-			eventName ??= listener.name as K
-			if (!BOT_EVENT_NAMES.includes(eventName)) {
-				throw new Error(`invalid event name: ${eventName}`)
+			const realEventName = eventName ?? listener.name as K
+			if (!BOT_EVENT_NAMES.includes(realEventName)) {
+				throw new Error(`invalid event name: ${realEventName}`)
 			} else {
 				this._eventListeners ??= {}
-				this._eventListeners[eventName] ??= []
-				this._eventListeners[eventName]!.push(listener as (...args: Array<any>) => any)
+				this._eventListeners[realEventName] ??= []
+				this._eventListeners[realEventName]!.push(listener as (...args: Array<any>) => any)
 			}
 		}
 	}
