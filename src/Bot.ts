@@ -33,6 +33,7 @@ export default class Bot extends BotEventManager {
 	public readonly cachedMessages: WeakReadonlyArray<Message>
 	public commands: Array<Command.Text | Command.Slash>
 	public channels: Array<Channel>
+	public readonly ownerId: Snowflake | null
 	constructor(option: BotInitOption = {}) {
 		super({ intents: option.intents })
 		if (option.prefix !== undefined && typeof option.prefix !== 'string') {
