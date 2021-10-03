@@ -91,4 +91,21 @@ export default abstract class BotEventManager extends ClientManager {
 			}
 		}
 	}
+	public removeListener<K extends keyof BotEvents>(listener: ((...args: BotEvents[K]) => any) & { name: K }): void
+	public removeListener<K extends keyof BotEvents>(listener: (...args: BotEvents[K]) => any, eventName: K): void
+	public removeListener<K extends keyof BotEvents>(listener: (...args: BotEvents[K]) => any, eventName?: K) {
+		if (typeof listener !== 'function') {
+			throw new TypeError('type of listener is not function')
+		} else {
+			const realEventName = eventName ?? listener.name as K
+			if (!BOT_EVENT_NAMES.includes(realEventName)) {
+				throw new Error(`invalid event name: ${realEventName}`)
+			} else {
+				const foundIndex = (this._eventListeners[realEventName] ?? [] as Array<(...args: BotEvents[K]) => any>).indexOf(listener)
+				if (-1 !== foundIndex) {
+					this._eventListeners[realEventName]!.splice(foundIndex, 1)
+				}
+			}
+		}
+	}
 }
