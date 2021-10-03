@@ -10,7 +10,7 @@ export default class Text<ArgTypeList extends TextArgTypeList = TextArgTypeList>
 	public readonly argTypes: ArgTypeList
 	public callback: (ctx: Ctx.Text<ArgTypeList>) => any
 	constructor(option: TextCommandInitOption) {
-		super({ bot: option.bot, name: option.name, aliases: option.aliases })
+		super({ name: option.name, aliases: option.aliases })
 		if (option.argTypes !== undefined) {
 			const firstRestArgIndex = option.argTypes.findIndex(argType => argType.startsWith('...'))
 			if (0 < option.argTypes.length - 1 - firstRestArgIndex) { // there should not be any argument types back of rest argument type

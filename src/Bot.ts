@@ -140,7 +140,6 @@ export default class Bot extends BotEventManager {
 		return (bot: Bot, listenerName: string) => {
 			bot.addCommand(
 				new Command.Text({
-					bot,
 					name: option.name ?? listenerName,
 					aliases: option.aliases ?? [],
 					argTypes: option.argTypes,
@@ -153,7 +152,6 @@ export default class Bot extends BotEventManager {
 		return (bot: Bot, listenerName: string) => {
 			bot.addCommand(
 				new Command.Slash({
-					bot,
 					name: option.name ?? listenerName,
 					aliases: option.aliases,
 					description: option.description,
@@ -175,7 +173,6 @@ export default class Bot extends BotEventManager {
 				} else {
 					foundCommand.addSubCommand(
 						new Command.SubSlash({
-							bot,
 							for: option.for,
 							name: option.name ?? listenerName,
 							aliases: option.aliases,
@@ -253,7 +250,6 @@ export default class Bot extends BotEventManager {
 				if (command.type === 'text') {
 					this.addCommand(
 						new Command.Text({
-							bot: this,
 							name: command.name,
 							aliases: [ ...command.aliases ],
 							argTypes: [ ...command.argTypes ],
@@ -262,7 +258,6 @@ export default class Bot extends BotEventManager {
 					)
 				} else {
 					const createdCommand = new Command.Slash({
-						bot: this,
 						name: command.name,
 						aliases: [ ...command.aliases ],
 						description: command.description,
@@ -274,7 +269,6 @@ export default class Bot extends BotEventManager {
 						for (const subCommand of command.subCommands) {
 							createdCommand.addSubCommand(
 								new Command.SubSlash({
-									bot: this,
 									for: subCommand.for,
 									name: subCommand.name,
 									aliases: [ ...subCommand.aliases ],

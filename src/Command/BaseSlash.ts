@@ -16,7 +16,7 @@ export default abstract class BaseSlash<T extends BaseSlashCtx> extends Base {
 	public readonly argDefinitions: SlashArgList
 	public callback: (ctx: T) => any
 	constructor(option: BaseSlashCommandInitOption<T>) {
-		super({ bot: option.bot, name: option.name, aliases: option.aliases })
+		super({ name: option.name, aliases: option.aliases })
 		if (/[A-Z]/.test(option.name)) {
 			throw new Error('capital letter cannot exist in name of slash command')
 		} else if (option.description !== undefined && typeof option.description !== 'string') {

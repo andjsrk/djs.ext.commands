@@ -11,7 +11,6 @@ export default class Slash extends BaseSlash<Ctx.Slash> {
 	public readonly subCommands: Array<SubSlash>
 	constructor(option: SlashCommandInitOption) {
 		super({
-			bot: option.bot,
 			name: option.name,
 			aliases: option.aliases,
 			description: option.description,
