@@ -1,7 +1,7 @@
 {
 	"name": "djs.ext.commands",
 	"description": "Imitation of discord.ext.commands written in TypeScript",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"author": "andjsrk",
 	"license": "MIT",
 	"repository": {
