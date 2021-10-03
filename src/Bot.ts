@@ -284,6 +284,12 @@ export default class Bot extends BotEventManager {
 	public get intents() {
 		return [ ...this._clientOption.intents ]
 	}
+	public get latency() {
+		return this.client.ws.ping
+	}
+	public get user() {
+		return this.client.user
+	}
 	public absorbCommands(bot: typeof Bot) {
 		if (!(bot.prototype instanceof Bot)) {
 			throw new TypeError('target is not extending class Bot')
