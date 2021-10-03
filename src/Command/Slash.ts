@@ -17,7 +17,7 @@ export default class Slash extends BaseSlash<Ctx.Slash> {
 			argDefinitions: option.argDefinitions,
 			callback: option.callback,
 		})
-		if (option.noSubCommand !== undefined && typeof option !== 'boolean') {
+		if (option.noSubCommand !== undefined && typeof option.noSubCommand !== 'boolean') {
 			throw new TypeError('type of noSubCommand is not boolean')
 		} else {
 			this.noSubCommand = option.noSubCommand ?? true
