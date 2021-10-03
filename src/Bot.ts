@@ -385,6 +385,9 @@ export default class Bot extends BotEventManager {
 		}
 		return createdGuild
 	}
+	public async deleteInvite(invite: Invite) {
+		await invite.delete()
+	}
 	public async fetchApplicationInfo() {
 		return await this.client.application?.fetch()
 	}
