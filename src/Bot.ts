@@ -24,12 +24,11 @@ export namespace ListenerOption {
 }
 
 export interface BotInitOption {
-	readonly prefix?: string
 	readonly intents?: Array<IntentFlags>
 	readonly ownerId?: Snowflake
+	readonly prefix?: string
 }
 export default class Bot extends BotEventManager {
-	public readonly prefix: string
 	protected readonly _eventWaiters: {
 		[K in keyof BotEvents]?: Array<{
 			check: ((...args: BotEvents[K]) => boolean) | undefined
@@ -52,7 +51,6 @@ export default class Bot extends BotEventManager {
 		} else if (option.ownerId !== undefined && typeof option.ownerId !== 'string') {
 			throw new TypeError('type of ownerId is not string')
 		} else {
-			this.prefix = option.prefix ?? ''
 			// #region listener init
 			this.addRawListener(() => {
 				const guildChannels = [ ...this.client.channels.cache.filter(channel => ![ 'DM', 'GROUP_DM', 'UNKNOWN' ].includes(channel.type)).values() as IterableIterator<GuildChannel> ]
