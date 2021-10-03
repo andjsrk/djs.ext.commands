@@ -73,10 +73,10 @@ export default class Bot extends BotEventManager {
 				if (users.length !== 0) {
 					this.users.push(...users)
 				}
-				const commandDataList = (this.commands.filter(command => command.type === 'slash') as Array<Command.Slash>).map(command => command.toRawArray()).flat(1)
-				if (commandDataList.length !== 0) {
+				const commandDatas = (this.commands.filter(command => command.type === 'slash') as Array<Command.Slash>).map(command => command.toRawArray()).flat(1)
+				if (commandDatas.length !== 0) {
 					for (const [ _, guild ] of this.client.guilds.cache) {
-						guild.commands.set(commandDataList)
+						guild.commands.set(commandDatas)
 					}
 				}
 			}, 'ready')
