@@ -87,7 +87,7 @@ export default class Text<ArgTypeList extends TextArgTypeList = TextArgTypeList>
 	}
 	protected parseRawToArgs(raw: string) {
 		const args: Array<any> = []
-		const rawArgs = raw.replace(`${this.bot.prefix}${this.matchedAliase}${0 < this.command.argTypes.length ? ' ' : ''}`, '').split(' ')
+		const rawArgs = raw.replace(`${this.bot.prefix}${this.matchedAliase}${this.command.argTypes.length !== 0 ? ' ' : ''}`, '').split(' ')
 		const isPureArgType = (argType: PureTextArgType | RestTextArgType): argType is PureTextArgType => !argType.startsWith('...')
 		for (const argType of this.command.argTypes) {
 			if (isPureArgType(argType)) {

@@ -92,7 +92,7 @@ export default class Bot extends BotEventManager {
 			this.addRawListener(message => {
 				this.cachedMessages['_array'].push(message)
 				for (const command of this.commands.filter(command => command.type === 'text') as Array<Command.Text>) {
-					if (command.argTypes.length < 1) {
+					if (command.argTypes.length === 0) {
 						const matchedAliase = [ command.name, ...command.aliases ].find(aliase => message.content === `${this.prefix}${aliase}`)
 						if (matchedAliase !== undefined) {
 							const textCommandCtx = new Ctx.Text({ bot: this, message, command, matchedAliase })
