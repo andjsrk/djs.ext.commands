@@ -13,7 +13,7 @@ export default class ClientManager {
 	protected readonly _clientOption: ClientOption
 	constructor(option: ClientManagerInitOption) {
 		const clientOption: ClientOption = {
-			intents: [ IntentFlags.GUILDS, IntentFlags.GUILD_MESSAGES, IntentFlags.DIRECT_MESSAGES ]
+			intents: [ IntentFlags.GUILDS, IntentFlags.GUILD_MESSAGES ]
 		}
 		if (option.intents !== undefined) {
 			clientOption.intents = option.intents
