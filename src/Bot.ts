@@ -26,6 +26,7 @@ export namespace ListenerOption {
 export interface BotInitOption {
 	readonly prefix?: string
 	readonly intents?: Array<IntentFlags>
+	readonly ownerId?: Snowflake
 }
 export default class Bot extends BotEventManager {
 	public readonly prefix: string
@@ -36,6 +37,8 @@ export default class Bot extends BotEventManager {
 		super({ intents: option.intents })
 		if (option.prefix !== undefined && typeof option.prefix !== 'string') {
 			throw new TypeError('type of prefix is not string')
+		} else if (option.ownerId !== undefined && typeof option.ownerId !== 'string') {
+			throw new TypeError('type of ownerId is not string')
 		} else {
 			this.prefix = option.prefix ?? ''
 			// #region listener init
@@ -350,11 +353,11 @@ export default class Bot extends BotEventManager {
 	public async fetchApplicationInfo() {
 		return await this.client.application?.fetch()
 	}
+	public isOwner(user: User) {
+		return this.ownerId === user.id
+	}
 	public isReady(): this is this & { client: Client<true> } {
 		return this.client.readyAt !== null
-	}
-	public isOwner(user: User) {
-		return this.client.application?.owner?.id === user.id
 	}
 	public async run(token: string): Promise<void> {
 		if (typeof token !== 'string') {
