@@ -1,6 +1,6 @@
 import * as $path from 'path'
 import {
-	Channel, Client, Collection, Message, User,
+	Client, Collection, DMChannel, Guild, GuildChannel, GuildEmoji, Invite, Message, User,
 	MessageMentionOptions, PresenceData, Snowflake, TextBasedChannels,
 } from 'discord.js'
 import BotEventManager, { BotEvents, BotEventListenerMethodName } from './BotEventManager'
@@ -31,9 +31,14 @@ export interface BotInitOption {
 export default class Bot extends BotEventManager {
 	public readonly prefix: string
 	public readonly cachedMessages: WeakReadonlyArray<Message>
-	public commands: Array<Command.Text | Command.Slash>
-	public channels: Array<Channel>
+	public commands: Array<Command.Text | Command.Slash> // decorators are must able to assign before init
+	public readonly channels: Array<Exclude<GuildChannel, DMChannel>>
+	public readonly emojis: Array<GuildEmoji>
+	public readonly guilds: Array<Guild>
 	public readonly ownerId: Snowflake | null
+	public readonly prefix: string
+	public readonly privateChannels: Array<DMChannel>
+	public readonly users: Array<User>
 	constructor(option: BotInitOption = {}) {
 		super({ intents: option.intents })
 		if (option.prefix !== undefined && typeof option.prefix !== 'string') {
@@ -44,12 +49,40 @@ export default class Bot extends BotEventManager {
 			this.prefix = option.prefix ?? ''
 			// #region listener init
 			this.addRawListener(() => {
-				this.channels.push(...this.client.channels.cache.values())
+				const guildChannels = [ ...this.client.channels.cache.filter(channel => ![ 'DM', 'GROUP_DM', 'UNKNOWN' ].includes(channel.type)).values() as IterableIterator<GuildChannel> ]
+				if (guildChannels.length !== 0) {
+					this.channels.push(...guildChannels)
+				}
+				const emojis = [ ...this.client.emojis.cache.values() ]
+				if (emojis.length !== 0) {
+					this.emojis.push(...emojis)
+				}
+				const guilds = [ ...this.client.guilds.cache.values() ]
+				if (guilds.length !== 0) {
+					this.guilds.push(...guilds)
+				}
+				const privateChannels = [ ...this.client.channels.cache.filter(channel => channel.type === 'DM').values() as IterableIterator<DMChannel> ]
+				if (privateChannels.length !== 0) {
+					this.privateChannels.push(...privateChannels)
+				}
+				const users = [ ...this.client.users.cache.values() ]
+				if (users.length !== 0) {
+					this.users.push(...users)
+				}
 				const commandDataList = (this.commands.filter(command => command.type === 'slash') as Array<Command.Slash>).map(command => command.toRawArray()).flat(1)
 				for (const [ _, guild ] of this.client.guilds.cache) {
 					guild.commands.set(commandDataList)
 				}
 			}, 'ready')
+			this.addRawListener(channel => {
+				this.channels.push(channel)
+			}, 'channelCreate')
+			this.addRawListener(emoji => {
+				this.emojis.push(emoji)
+			}, 'emojiCreate')
+			this.addRawListener(guild => {
+				this.guilds.push(guild)
+			}, 'guildCreate')
 			this.addRawListener(message => {
 				for (const command of this.commands.filter(command => command.type === 'text') as Array<Command.Text>) {
 					if (command.argTypes.length < 1) {
@@ -96,8 +129,6 @@ export default class Bot extends BotEventManager {
 				}
 			}, 'interactionCreate')
 			// #endregion listener init
-			this.commands ??= []
-			this.channels ??= []
 			this.cachedMessages = new WeakReadonlyArray(
 				...this.client.guilds.cache
 					.reduce((p, c) =>
@@ -112,13 +143,15 @@ export default class Bot extends BotEventManager {
 						[] as Array<Message>
 					)
 			)
-			for (const [ _, guild ] of this.client.guilds.cache) {
-				for (const [ _, channel ] of guild.channels.cache) {
-					if (channel.isText()) {
-						channel.messages['_add']
-					}
-				}
-			}
+			this._eventWaiters = {}
+			this.commands ??= []
+			this.channels = []
+			this.emojis = []
+			this.guilds = []
+			this.ownerId = option.ownerId ?? null
+			this.prefix = option.prefix ?? ''
+			this.privateChannels = []
+			this.users = []
 		}
 	}
 	// #region decorator
