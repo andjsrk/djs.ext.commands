@@ -152,13 +152,15 @@ export default class Text<ArgTypeList extends TextArgTypeList = TextArgTypeList>
 		}
 	}
 	public async reply(content: string | MessageEmbed | MessageOptions) {
+		let repliedMessage: Message
 		if (typeof content === 'string') {
-			await this.message.reply({ content })
+			repliedMessage = await this.message.reply({ content })
 		} else if (content instanceof MessageEmbed) {
-			await this.message.reply({ embeds: [ content ] })
+			repliedMessage = await this.message.reply({ embeds: [ content ] })
 		} else {
-			await this.message.reply(content)
+			repliedMessage = await this.message.reply(content)
 		}
+		return repliedMessage
 	}
 	public override async send(content: string | MessageEmbed, option?: MessageSendOption): Promise<Message>
 	public override async send(option: MessageOptions & MessageSendOption): Promise<Message>
