@@ -74,8 +74,10 @@ export default class Bot extends BotEventManager {
 					this.users.push(...users)
 				}
 				const commandDataList = (this.commands.filter(command => command.type === 'slash') as Array<Command.Slash>).map(command => command.toRawArray()).flat(1)
-				for (const [ _, guild ] of this.client.guilds.cache) {
-					guild.commands.set(commandDataList)
+				if (commandDataList.length !== 0) {
+					for (const [ _, guild ] of this.client.guilds.cache) {
+						guild.commands.set(commandDataList)
+					}
 				}
 			}, 'ready')
 			this.addRawListener(channel => {
