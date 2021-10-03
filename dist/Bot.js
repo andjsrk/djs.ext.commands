@@ -38,8 +38,10 @@ class Bot extends BotEventManager_1.default {
                     this.users.push(...users);
                 }
                 const commandDataList = this.commands.filter(command => command.type === 'slash').map(command => command.toRawArray()).flat(1);
-                for (const [_, guild] of this.client.guilds.cache) {
-                    guild.commands.set(commandDataList);
+                if (commandDataList.length !== 0) {
+                    for (const [_, guild] of this.client.guilds.cache) {
+                        guild.commands.set(commandDataList);
+                    }
                 }
             }, 'ready');
             this.addRawListener(channel => {
@@ -54,7 +56,7 @@ class Bot extends BotEventManager_1.default {
             this.addRawListener(message => {
                 this.cachedMessages['_array'].push(message);
                 for (const command of this.commands.filter(command => command.type === 'text')) {
-                    if (command.argTypes.length < 1) {
+                    if (command.argTypes.length === 0) {
                         const matchedAliase = [command.name, ...command.aliases].find(aliase => message.content === `${this.prefix}${aliase}`);
                         if (matchedAliase !== undefined) {
                             const textCommandCtx = new Ctx.Text({ bot: this, message, command, matchedAliase });

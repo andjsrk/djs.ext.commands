@@ -17,7 +17,7 @@ class Text extends Base_1.default {
     }
     parseRawToArgs(raw) {
         const args = [];
-        const rawArgs = raw.replace(`${this.bot.prefix}${this.matchedAliase}${0 < this.command.argTypes.length ? ' ' : ''}`, '').split(' ');
+        const rawArgs = raw.replace(`${this.bot.prefix}${this.matchedAliase}${this.command.argTypes.length !== 0 ? ' ' : ''}`, '').split(' ');
         const isPureArgType = (argType) => !argType.startsWith('...');
         for (const argType of this.command.argTypes) {
             if (isPureArgType(argType)) {
