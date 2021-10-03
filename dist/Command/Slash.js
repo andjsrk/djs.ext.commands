@@ -5,7 +5,6 @@ const SubSlash_1 = require("./SubSlash");
 class Slash extends BaseSlash_1.default {
     constructor(option) {
         super({
-            bot: option.bot,
             name: option.name,
             aliases: option.aliases,
             description: option.description,

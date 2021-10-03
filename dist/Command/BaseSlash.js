@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Base_1 = require("./Base");
 class BaseSlash extends Base_1.default {
     constructor(option) {
-        super({ bot: option.bot, name: option.name, aliases: option.aliases });
+        super({ name: option.name, aliases: option.aliases });
         if (/[A-Z]/.test(option.name)) {
             throw new Error('capital letter cannot exist in name of slash command');
         }
@@ -19,7 +19,7 @@ class BaseSlash extends Base_1.default {
         else {
             if (option.argDefinitions !== undefined) {
                 const firstOptionalArgIndex = option.argDefinitions.findIndex(argDefinition => argDefinition.type.endsWith('?'));
-                if (-1 < firstOptionalArgIndex && !option.argDefinitions.slice(firstOptionalArgIndex).every(argDefinition => argDefinition.type.endsWith('?'))) {
+                if (-1 !== firstOptionalArgIndex && !option.argDefinitions.slice(firstOptionalArgIndex).every(argDefinition => argDefinition.type.endsWith('?'))) {
                     throw new TypeError(`non optional argument ${option.argDefinitions.slice(firstOptionalArgIndex).find(argDefinition => !argDefinition.type.endsWith('?')).name} does not precede optional argument`);
                 }
                 else {

@@ -1,4 +1,4 @@
-import { Channel, Client, Message, User, MessageMentionOptions, PresenceData } from 'discord.js';
+import { Client, DMChannel, Guild, GuildChannel, GuildEmoji, Invite, Message, User, MessageMentionOptions, PresenceData, Snowflake } from 'discord.js';
 import BotEventManager, { BotEvents, BotEventListenerMethodName } from './BotEventManager';
 import * as Command from './Command';
 import { TextCommandInitOption } from './Command/Text';
@@ -16,14 +16,26 @@ export declare namespace ListenerOption {
     }
 }
 export interface BotInitOption {
-    readonly prefix?: string;
     readonly intents?: Array<IntentFlags>;
+    readonly ownerId?: Snowflake;
+    readonly prefix?: string;
 }
 export default class Bot extends BotEventManager {
-    readonly prefix: string;
+    protected readonly _eventWaiters: {
+        [K in keyof BotEvents]?: Array<{
+            check: ((...args: BotEvents[K]) => boolean) | undefined;
+            resolve: (...args: BotEvents[K]) => void;
+        }>;
+    };
     readonly cachedMessages: WeakReadonlyArray<Message>;
     commands: Array<Command.Text | Command.Slash>;
-    channels: Array<Channel>;
+    readonly channels: Array<Exclude<GuildChannel, DMChannel>>;
+    readonly emojis: Array<GuildEmoji>;
+    readonly guilds: Array<Guild>;
+    readonly ownerId: Snowflake | null;
+    readonly prefix: string;
+    readonly privateChannels: Array<DMChannel>;
+    readonly users: Array<User>;
     constructor(option?: BotInitOption);
     static event(eventName: keyof BotEvents): (bot: Bot, listenerName: string) => void;
     static event(bot: Bot, listenerName: BotEventListenerMethodName): void;
@@ -39,6 +51,8 @@ export default class Bot extends BotEventManager {
     }[] | undefined;
     get allowedMentions(): MessageMentionOptions | undefined;
     get intents(): IntentFlags[];
+    get latency(): number;
+    get user(): import("discord.js").ClientUser | null;
     absorbCommands(bot: typeof Bot): void;
     absorbCommandsSyncByPath(path: string): void;
     absorbCommandsByPath(path: string): Promise<void>;
@@ -48,12 +62,17 @@ export default class Bot extends BotEventManager {
         region?: string;
         icon?: string;
         code?: string;
-    }): Promise<import("discord.js").Guild>;
+    }): Promise<Guild>;
+    deleteInvite(invite: Invite): Promise<void>;
     fetchApplicationInfo(): Promise<import("discord.js").ClientApplication | undefined>;
+    isOwner(user: User): boolean;
     isReady(): this is this & {
         client: Client<true>;
     };
-    isOwner(user: User): boolean;
     run(token: string): Promise<void>;
+    waitFor<K extends keyof BotEvents>(eventName: K, option?: {
+        check?: (...args: BotEvents[K]) => boolean;
+        timeout?: number;
+    }): Promise<BotEvents[K]>;
 }
 export {};

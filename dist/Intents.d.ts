@@ -15,6 +15,3 @@ export declare enum IntentFlags {
     DIRECT_MESSAGE_REACTIONS = 8192,
     DIRECT_MESSAGE_TYPING = 16384
 }
-export declare class Intents {
-    static readonly FLAG: typeof IntentFlags;
-}

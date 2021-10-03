@@ -27,4 +27,8 @@ export default abstract class BotEventManager extends ClientManager {
         name: K;
     }): void;
     addListener<K extends keyof BotEvents>(listener: (...args: BotEvents[K]) => any, eventName: K): void;
+    removeListener<K extends keyof BotEvents>(listener: ((...args: BotEvents[K]) => any) & {
+        name: K;
+    }): void;
+    removeListener<K extends keyof BotEvents>(listener: (...args: BotEvents[K]) => any, eventName: K): void;
 }

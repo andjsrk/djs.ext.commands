@@ -1,5 +1,5 @@
 export default class WeakReadonlyArray<T = any> {
-    #private;
+    protected readonly _array: Array<T>;
     constructor(length: number);
     constructor(...items: Array<T>);
     readonly [index: number]: T;

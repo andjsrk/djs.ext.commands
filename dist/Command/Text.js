@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Base_1 = require("./Base");
 class Text extends Base_1.default {
     constructor(option) {
-        super({ bot: option.bot, name: option.name, aliases: option.aliases });
+        super({ name: option.name, aliases: option.aliases });
         this.type = 'text';
         if (option.argTypes !== undefined) {
             const firstRestArgIndex = option.argTypes.findIndex(argType => argType.startsWith('...'));

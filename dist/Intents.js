@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Intents = exports.IntentFlags = void 0;
+exports.IntentFlags = void 0;
 var IntentFlags;
 (function (IntentFlags) {
     IntentFlags[IntentFlags["GUILDS"] = 1] = "GUILDS";
@@ -19,7 +19,3 @@ var IntentFlags;
     IntentFlags[IntentFlags["DIRECT_MESSAGE_REACTIONS"] = 8192] = "DIRECT_MESSAGE_REACTIONS";
     IntentFlags[IntentFlags["DIRECT_MESSAGE_TYPING"] = 16384] = "DIRECT_MESSAGE_TYPING";
 })(IntentFlags = exports.IntentFlags || (exports.IntentFlags = {}));
-class Intents {
-}
-exports.Intents = Intents;
-Intents.FLAG = IntentFlags;

@@ -24,7 +24,7 @@ export default class Text<ArgTypeList extends TextArgTypeList = TextArgTypeList>
     constructor(option: TextCtxInitOption);
     protected parseRawToArgs(raw: string): any[];
     protected parseOneArg(argType: PureTextArgType, content: string): string | number | boolean | import("discord.js").GuildChannel | GuildMember | Role | import("discord.js").ThreadChannel | User | null;
-    reply(content: string | MessageEmbed | MessageOptions): Promise<void>;
+    reply(content: string | MessageEmbed | MessageOptions): Promise<Message>;
     send(content: string | MessageEmbed, option?: MessageSendOption): Promise<Message>;
     send(option: MessageOptions & MessageSendOption): Promise<Message>;
 }

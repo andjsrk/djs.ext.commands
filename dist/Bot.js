@@ -8,21 +8,51 @@ const WeakReadonlyArray_1 = require("./WeakReadonlyArray");
 class Bot extends BotEventManager_1.default {
     constructor(option = {}) {
         super({ intents: option.intents });
-        this.client.shard?.broadcastEval;
         if (option.prefix !== undefined && typeof option.prefix !== 'string') {
             throw new TypeError('type of prefix is not string');
         }
+        else if (option.ownerId !== undefined && typeof option.ownerId !== 'string') {
+            throw new TypeError('type of ownerId is not string');
+        }
         else {
-            this.prefix = option.prefix ?? '';
             // #region listener init
             this.addRawListener(() => {
-                this.channels.push(...this.client.channels.cache.values());
+                const guildChannels = [...this.client.channels.cache.filter(channel => !['DM', 'GROUP_DM', 'UNKNOWN'].includes(channel.type)).values()];
+                if (guildChannels.length !== 0) {
+                    this.channels.push(...guildChannels);
+                }
+                const emojis = [...this.client.emojis.cache.values()];
+                if (emojis.length !== 0) {
+                    this.emojis.push(...emojis);
+                }
+                const guilds = [...this.client.guilds.cache.values()];
+                if (guilds.length !== 0) {
+                    this.guilds.push(...guilds);
+                }
+                const privateChannels = [...this.client.channels.cache.filter(channel => channel.type === 'DM').values()];
+                if (privateChannels.length !== 0) {
+                    this.privateChannels.push(...privateChannels);
+                }
+                const users = [...this.client.users.cache.values()];
+                if (users.length !== 0) {
+                    this.users.push(...users);
+                }
                 const commandDataList = this.commands.filter(command => command.type === 'slash').map(command => command.toRawArray()).flat(1);
                 for (const [_, guild] of this.client.guilds.cache) {
                     guild.commands.set(commandDataList);
                 }
             }, 'ready');
+            this.addRawListener(channel => {
+                this.channels.push(channel);
+            }, 'channelCreate');
+            this.addRawListener(emoji => {
+                this.emojis.push(emoji);
+            }, 'emojiCreate');
+            this.addRawListener(guild => {
+                this.guilds.push(guild);
+            }, 'guildCreate');
             this.addRawListener(message => {
+                this.cachedMessages['_array'].push(message);
                 for (const command of this.commands.filter(command => command.type === 'text')) {
                     if (command.argTypes.length < 1) {
                         const matchedAliase = [command.name, ...command.aliases].find(aliase => message.content === `${this.prefix}${aliase}`);
@@ -72,26 +102,26 @@ class Bot extends BotEventManager_1.default {
                 }
             }, 'interactionCreate');
             // #endregion listener init
-            this.commands ??= [];
-            this.channels ??= [];
             this.cachedMessages = new WeakReadonlyArray_1.default(...this.client.guilds.cache
                 .reduce((p, c) => p.concat(c.channels.cache
                 .filter(channel => channel.isText())
                 .reduce((_p, _c) => _p.concat([..._c.messages.cache.values()]), [])), []));
-            for (const [_, guild] of this.client.guilds.cache) {
-                for (const [_, channel] of guild.channels.cache) {
-                    if (channel.isText()) {
-                        channel.messages['_add'];
-                    }
-                }
-            }
+            this._eventWaiters = {};
+            this.commands ??= [];
+            this.channels = [];
+            this.emojis = [];
+            this.guilds = [];
+            this.ownerId = option.ownerId ?? null;
+            this.prefix = option.prefix ?? '';
+            this.privateChannels = [];
+            this.users = [];
         }
     }
     static event(first, listenerName) {
         if (listenerName === undefined) {
             const eventName = first;
             return (bot, _listenerName) => {
-                bot.addListener(bot[_listenerName].bind(this), eventName);
+                bot.addListener(bot[_listenerName].bind(bot), eventName);
             };
         }
         else {
@@ -101,31 +131,29 @@ class Bot extends BotEventManager_1.default {
             }
             else {
                 const eventName = listenerName.replace(/^on([A-Z])/, (_, $1) => $1.toLowerCase());
-                bot.addListener(bot[listenerName].bind(this), eventName);
+                bot.addListener(bot[listenerName].bind(bot), eventName);
             }
         }
     }
     static textCommand(option = {}) {
         return (bot, listenerName) => {
             bot.addCommand(new Command.Text({
-                bot,
                 name: option.name ?? listenerName,
                 aliases: option.aliases ?? [],
                 argTypes: option.argTypes,
-                callback: bot[listenerName].bind(this),
+                callback: bot[listenerName].bind(bot),
             }));
         };
     }
     static slashCommand(option = {}) {
         return (bot, listenerName) => {
             bot.addCommand(new Command.Slash({
-                bot,
                 name: option.name ?? listenerName,
                 aliases: option.aliases,
                 description: option.description,
                 argDefinitions: option.argDefinitions,
                 noSubCommand: option.noSubCommand,
-                callback: bot[listenerName].bind(this),
+                callback: bot[listenerName].bind(bot),
             }));
         };
     }
@@ -141,14 +169,13 @@ class Bot extends BotEventManager_1.default {
                 }
                 else {
                     foundCommand.addSubCommand(new Command.SubSlash({
-                        bot,
                         for: option.for,
                         name: option.name ?? listenerName,
                         aliases: option.aliases,
                         description: option.description,
                         argDefinitions: option.argDefinitions,
                         mainCommand: foundCommand,
-                        callback: bot[listenerName].bind(this),
+                        callback: bot[listenerName].bind(bot),
                     }));
                 }
             }
@@ -213,6 +240,12 @@ class Bot extends BotEventManager_1.default {
     get intents() {
         return [...this._clientOption.intents];
     }
+    get latency() {
+        return this.client.ws.ping;
+    }
+    get user() {
+        return this.client.user;
+    }
     absorbCommands(bot) {
         if (!(bot.prototype instanceof Bot)) {
             throw new TypeError('target is not extending class Bot');
@@ -221,7 +254,6 @@ class Bot extends BotEventManager_1.default {
             for (const command of bot.prototype.commands ?? []) {
                 if (command.type === 'text') {
                     this.addCommand(new Command.Text({
-                        bot: this,
                         name: command.name,
                         aliases: [...command.aliases],
                         argTypes: [...command.argTypes],
@@ -230,7 +262,6 @@ class Bot extends BotEventManager_1.default {
                 }
                 else {
                     const createdCommand = new Command.Slash({
-                        bot: this,
                         name: command.name,
                         aliases: [...command.aliases],
                         description: command.description,
@@ -241,7 +272,6 @@ class Bot extends BotEventManager_1.default {
                     if (!command.noSubCommand) {
                         for (const subCommand of command.subCommands) {
                             createdCommand.addSubCommand(new Command.SubSlash({
-                                bot: this,
                                 for: subCommand.for,
                                 name: subCommand.name,
                                 aliases: [...subCommand.aliases],
@@ -328,14 +358,17 @@ class Bot extends BotEventManager_1.default {
         }
         return createdGuild;
     }
+    async deleteInvite(invite) {
+        await invite.delete();
+    }
     async fetchApplicationInfo() {
         return await this.client.application?.fetch();
     }
+    isOwner(user) {
+        return this.ownerId === user.id;
+    }
     isReady() {
         return this.client.readyAt !== null;
-    }
-    isOwner(user) {
-        return this.client.application?.owner?.id === user.id;
     }
     async run(token) {
         if (typeof token !== 'string') {
@@ -344,6 +377,60 @@ class Bot extends BotEventManager_1.default {
         else {
             await this.client.login(token);
         }
+    }
+    waitFor(eventName, option = {}) {
+        return new Promise((resolve, reject) => {
+            if (!BotEventManager_1.BOT_EVENT_NAMES.includes(eventName)) {
+                reject(new Error(`invalid event name: ${eventName}`));
+            }
+            else if (typeof option !== 'object' || option === null) {
+                throw new TypeError('type of option is not object');
+            }
+            else if (option.check !== undefined && typeof option.check !== 'function') {
+                throw new TypeError('type of option.check is not function');
+            }
+            else if (option.timeout !== undefined && typeof option.timeout !== 'number') {
+                throw new TypeError('type of option.timeout is not number');
+            }
+            else {
+                const waiter = {
+                    check: option.check,
+                    resolve: (..._) => { },
+                };
+                this._eventWaiters[eventName] ??= [];
+                const nonUndefinedEventWaiters = this._eventWaiters[eventName];
+                nonUndefinedEventWaiters.push(waiter);
+                if (option.timeout !== undefined) {
+                    const timeout = setTimeout(() => {
+                        nonUndefinedEventWaiters.splice(nonUndefinedEventWaiters.indexOf(waiter), 1);
+                        reject(new Error('timed out'));
+                    }, option.timeout);
+                    waiter.resolve = (...args) => {
+                        clearTimeout(timeout);
+                        resolve(args);
+                    };
+                }
+                else {
+                    waiter.resolve = (...args) => {
+                        resolve(args);
+                    };
+                }
+                const listener = (...args) => {
+                    if (waiter.check !== undefined) {
+                        if (waiter.check(...args)) {
+                            waiter.resolve(...args);
+                        }
+                    }
+                    else {
+                        waiter.resolve(...args);
+                    }
+                };
+                this.addListener((...args) => {
+                    this.removeListener(listener, eventName);
+                    listener(...args);
+                }, eventName);
+            }
+        });
     }
 }
 exports.default = Bot;

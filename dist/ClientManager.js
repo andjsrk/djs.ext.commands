@@ -5,7 +5,7 @@ const Intents_1 = require("./Intents");
 class ClientManager {
     constructor(option) {
         const clientOption = {
-            intents: [Intents_1.IntentFlags.GUILDS, Intents_1.IntentFlags.GUILD_MESSAGES, Intents_1.IntentFlags.DIRECT_MESSAGES]
+            intents: [Intents_1.IntentFlags.GUILDS, Intents_1.IntentFlags.GUILD_MESSAGES]
         };
         if (option.intents !== undefined) {
             clientOption.intents = option.intents;

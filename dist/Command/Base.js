@@ -12,7 +12,6 @@ class Base {
             throw new TypeError('type of item of aliases is not string');
         }
         else {
-            this.bot = option.bot;
             this.name = option.name;
             this.aliases = [...(option.aliases ?? [])];
         }

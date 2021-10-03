@@ -87,15 +87,17 @@ class Text extends Base_1.default {
         }
     }
     async reply(content) {
+        let repliedMessage;
         if (typeof content === 'string') {
-            await this.message.reply({ content });
+            repliedMessage = await this.message.reply({ content });
         }
         else if (content instanceof discord_js_1.MessageEmbed) {
-            await this.message.reply({ embeds: [content] });
+            repliedMessage = await this.message.reply({ embeds: [content] });
         }
         else {
-            await this.message.reply(content);
+            repliedMessage = await this.message.reply(content);
         }
+        return repliedMessage;
     }
     async send(content, option = {}) {
         const dSendOption = typeof content === 'string'

@@ -2,7 +2,32 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BOT_EVENT_NAMES = exports.PURE_BOT_EVENT_NAMES = exports.CLIENT_EVENT_NAMES = void 0;
 const ClientManager_1 = require("./ClientManager");
-exports.CLIENT_EVENT_NAMES = ['messageCreate', 'messageUpdate', 'messageDelete', 'interactionCreate', 'ready'];
+exports.CLIENT_EVENT_NAMES = [
+    'debug', 'error', 'warn',
+    'ready', 'rateLimit', 'invalidRequestWarning', 'invalidated',
+    'applicationCommandCreate', 'applicationCommandDelete', 'applicationCommandUpdate',
+    'channelCreate', 'channelDelete', 'channelPinsUpdate', 'channelUpdate',
+    'emojiCreate', 'emojiDelete', 'emojiUpdate',
+    'guildBanAdd', 'guildBanRemove',
+    'guildCreate', 'guildDelete', 'guildUpdate',
+    'guildIntegrationsUpdate',
+    'guildMemberAdd', 'guildMemberAvailable', 'guildMemberRemove', 'guildMemberUpdate', 'guildMembersChunk',
+    'guildUnavailable',
+    'interactionCreate',
+    'inviteCreate', 'inviteDelete',
+    'messageCreate', 'messageDelete', 'messageDeleteBulk', 'messageUpdate',
+    'messageReactionAdd', 'messageReactionRemove', 'messageReactionRemoveAll', 'messageReactionRemoveEmoji',
+    'presenceUpdate',
+    'roleCreate', 'roleDelete', 'roleUpdate',
+    'shardDisconnect', 'shardError', 'shardReady', 'shardReconnecting', 'shardResume',
+    'stageInstanceCreate', 'stageInstanceDelete', 'stageInstanceUpdate',
+    'stickerCreate', 'stickerDelete', 'stickerUpdate',
+    'threadCreate', 'threadDelete', 'threadListSync', 'threadMemberUpdate', 'threadMembersUpdate', 'threadUpdate',
+    'typingStart',
+    'userUpdate',
+    'voiceStateUpdate',
+    'webhookUpdate',
+];
 exports.PURE_BOT_EVENT_NAMES = [
     'buttonPress', 'selectMenuSelect',
 ];
@@ -33,8 +58,7 @@ class BotEventManager extends ClientManager_1.default {
             throw new TypeError('type of listener is not function');
         }
         else {
-            eventName ??= listener.name;
-            this.client.on(eventName, listener);
+            this.client.on(eventName ?? listener.name, listener);
         }
     }
     addListener(listener, eventName) {
@@ -42,14 +66,31 @@ class BotEventManager extends ClientManager_1.default {
             throw new TypeError('type of listener is not function');
         }
         else {
-            eventName ??= listener.name;
-            if (!exports.BOT_EVENT_NAMES.includes(eventName)) {
-                throw new Error(`invalid event name: ${eventName}`);
+            const realEventName = eventName ?? listener.name;
+            if (!exports.BOT_EVENT_NAMES.includes(realEventName)) {
+                throw new Error(`invalid event name: ${realEventName}`);
             }
             else {
                 this._eventListeners ??= {};
-                this._eventListeners[eventName] ??= [];
-                this._eventListeners[eventName].push(listener);
+                this._eventListeners[realEventName] ??= [];
+                this._eventListeners[realEventName].push(listener);
+            }
+        }
+    }
+    removeListener(listener, eventName) {
+        if (typeof listener !== 'function') {
+            throw new TypeError('type of listener is not function');
+        }
+        else {
+            const realEventName = eventName ?? listener.name;
+            if (!exports.BOT_EVENT_NAMES.includes(realEventName)) {
+                throw new Error(`invalid event name: ${realEventName}`);
+            }
+            else {
+                const foundIndex = (this._eventListeners[realEventName] ?? []).indexOf(listener);
+                if (-1 !== foundIndex) {
+                    this._eventListeners[realEventName].splice(foundIndex, 1);
+                }
             }
         }
     }
