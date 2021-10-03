@@ -3,7 +3,32 @@ import ClientManager from './ClientManager'
 import * as Ctx from './Ctx'
 import { IntentFlags } from './Intents'
 
-export const CLIENT_EVENT_NAMES: Array<keyof ClientEvents> = [ 'messageCreate', 'messageUpdate', 'messageDelete', 'interactionCreate', 'ready' ]
+export const CLIENT_EVENT_NAMES: Array<keyof ClientEvents> = [
+	'debug', 'error', 'warn',
+	'ready', 'rateLimit', 'invalidRequestWarning', 'invalidated',
+	'applicationCommandCreate', 'applicationCommandDelete', 'applicationCommandUpdate',
+	'channelCreate', 'channelDelete', 'channelPinsUpdate', 'channelUpdate',
+	'emojiCreate', 'emojiDelete', 'emojiUpdate',
+	'guildBanAdd', 'guildBanRemove',
+	'guildCreate', 'guildDelete', 'guildUpdate',
+	'guildIntegrationsUpdate',
+	'guildMemberAdd', 'guildMemberAvailable', 'guildMemberRemove', 'guildMemberUpdate', 'guildMembersChunk',
+	'guildUnavailable',
+	'interactionCreate',
+	'inviteCreate', 'inviteDelete',
+	'messageCreate', 'messageDelete', 'messageDeleteBulk', 'messageUpdate',
+	'messageReactionAdd', 'messageReactionRemove', 'messageReactionRemoveAll', 'messageReactionRemoveEmoji',
+	'presenceUpdate',
+	'roleCreate', 'roleDelete', 'roleUpdate',
+	'shardDisconnect', 'shardError', 'shardReady', 'shardReconnecting', 'shardResume',
+	'stageInstanceCreate', 'stageInstanceDelete', 'stageInstanceUpdate',
+	'stickerCreate', 'stickerDelete', 'stickerUpdate',
+	'threadCreate', 'threadDelete', 'threadListSync', 'threadMemberUpdate', 'threadMembersUpdate', 'threadUpdate',
+	'typingStart',
+	'userUpdate',
+	'voiceStateUpdate',
+	'webhookUpdate',
+]
 export const PURE_BOT_EVENT_NAMES: Array<keyof PureBotEvents> = [
 	'buttonPress', 'selectMenuSelect',
 ]
