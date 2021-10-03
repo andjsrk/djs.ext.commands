@@ -15,7 +15,3 @@ export enum IntentFlags {
 	DIRECT_MESSAGE_REACTIONS = 1 << 13,
 	DIRECT_MESSAGE_TYPING = 1 << 14,
 }
-
-export class Intents {
-	public static readonly FLAG = IntentFlags
-}
