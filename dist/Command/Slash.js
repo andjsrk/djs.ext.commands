@@ -12,7 +12,7 @@ class Slash extends BaseSlash_1.default {
             callback: option.callback,
         });
         this.type = 'slash';
-        if (option.noSubCommand !== undefined && typeof option !== 'boolean') {
+        if (option.noSubCommand !== undefined && typeof option.noSubCommand !== 'boolean') {
             throw new TypeError('type of noSubCommand is not boolean');
         }
         else {
