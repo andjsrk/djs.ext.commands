@@ -28,7 +28,7 @@ export default abstract class BaseSlash<T extends BaseSlashCtx> extends Base {
 		} else {
 			if (option.argDefinitions !== undefined) {
 				const firstOptionalArgIndex = option.argDefinitions.findIndex(argDefinition => argDefinition.type.endsWith('?'))
-				if (-1 < firstOptionalArgIndex && !option.argDefinitions.slice(firstOptionalArgIndex).every(argDefinition => argDefinition.type.endsWith('?'))) {
+				if (-1 !== firstOptionalArgIndex && !option.argDefinitions.slice(firstOptionalArgIndex).every(argDefinition => argDefinition.type.endsWith('?'))) {
 					throw new TypeError(`non optional argument ${option.argDefinitions.slice(firstOptionalArgIndex).find(argDefinition => !argDefinition.type.endsWith('?'))!.name} does not precede optional argument`)
 				} else {
 					for (let i = 0; i < option.argDefinitions.length; i++) {
