@@ -36,7 +36,7 @@ export default abstract class Interaction extends Base {
 			 ? option
 			 : typeof content === 'object' && content !== null
 			  ? content
-			  : (() => { throw new TypeError() })()
+			  : (() => { throw new TypeError('invalid type') })()
 		const reply = await this.interaction.reply({ ...dSendOption, fetchReply: true })
 		const sentReply = this.interaction.channel?.messages.cache.get(reply.id)
 		if (sentReply !== undefined) {
