@@ -37,7 +37,7 @@ export default abstract class Interaction extends Base {
 			 : typeof content === 'object' && content !== null
 			  ? content
 			  : (() => { throw new TypeError() })()
-		await this.interaction.reply(dSendOption)
+		await this.interaction.reply({ ...dSendOption, fetchReply: true })
 		const fetchedReply = await this.interaction.fetchReply()
 		const sentMsg = this.interaction.channel?.messages.cache.get(fetchedReply.id)
 		if (sentMsg !== undefined) {
