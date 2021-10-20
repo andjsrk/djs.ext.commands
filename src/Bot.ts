@@ -250,7 +250,7 @@ export default class Bot extends BotEventManager {
 			bot.addCommand(
 				new Command.Text({
 					name: option.name ?? listenerName,
-					aliases: option.aliases ?? [],
+					aliases: option.aliases,
 					argTypes: option.argTypes,
 					callback: (bot[listenerName as keyof typeof bot] as (...args: Array<any>) => void).bind(bot),
 				}),
