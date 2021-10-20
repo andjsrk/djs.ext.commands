@@ -1,5 +1,6 @@
-import BaseSlash, { BaseSlashCtxInitOption, SlashArgTypeList } from './BaseSlash'
-import SlashCommand from '../Command/Slash'
+import BaseSlash from './BaseSlash'
+import type { BaseSlashCtxInitOption, SlashArgTypeList } from './BaseSlash'
+import type SlashCommand from '../Command/Slash'
 
 export interface SlashCtxInitOption extends BaseSlashCtxInitOption {
 	readonly command: SlashCommand
@@ -11,9 +12,10 @@ export interface SlashCtxInitOption extends BaseSlashCtxInitOption {
  */
 export default class Slash<ArgTypeList extends SlashArgTypeList = SlashArgTypeList> extends BaseSlash<ArgTypeList> {
 	public override readonly command: SlashCommand
+	public override readonly type
 	constructor(option: SlashCtxInitOption) {
 		super({ bot: option.bot, interaction: option.interaction })
 		this.command = option.command
+		this.type = 'slash'
 	}
-	public override readonly type = 'slash'
 }

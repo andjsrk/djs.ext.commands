@@ -1,3 +1,4 @@
+/* eslint-disable no-bitwise, @typescript-eslint/prefer-literal-enum-member */
 export enum IntentFlags {
 	GUILDS = 1 << 0,
 	GUILD_MEMBERS = 1 << 1,
@@ -15,3 +16,4 @@ export enum IntentFlags {
 	DIRECT_MESSAGE_REACTIONS = 1 << 13,
 	DIRECT_MESSAGE_TYPING = 1 << 14,
 }
+/* eslint-enable no-bitwise, @typescript-eslint/prefer-literal-enum-member */

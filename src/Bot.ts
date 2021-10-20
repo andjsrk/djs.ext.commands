@@ -1,26 +1,24 @@
 import * as $path from 'path'
-import {
-	Client, Collection, DMChannel, Guild, GuildChannel, GuildEmoji, Invite, Message, User,
-	MessageMentionOptions, PresenceData, Snowflake, TextBasedChannels,
-} from 'discord.js'
-import BotEventManager, { BotEvents, BotEventListenerMethodName, BOT_EVENT_NAMES } from './BotEventManager'
+import type { Client, Collection, DMChannel, Guild, GuildChannel, GuildEmoji, Invite, Message, User } from 'discord.js'
+// eslint-disable-next-line @typescript-eslint/no-duplicate-imports
+import type { ActivitiesOptions, ClientApplication, MessageMentionOptions, PresenceData, Snowflake, TextBasedChannels } from 'discord.js'
+import BotEventManager, { BOT_EVENT_NAMES } from './BotEventManager'
+import type { BotEventListenerMethodName, BotEvents } from './BotEventManager'
 import * as Ctx from './Ctx'
 import * as Command from './Command'
-import { TextCommandInitOption } from './Command/Text'
-import SlashCommand, { SlashCommandInitOption } from './Command/Slash'
-import { SubSlashCommandInitOption } from './Command/SubSlash'
+import type { TextCommandInitOption } from './Command/Text'
+import type { SlashCommandInitOption } from './Command/Slash'
+import type { SubSlashCommandInitOption } from './Command/SubSlash'
 import type { IntentFlags } from './Intents'
 import WeakReadonlyArray from './WeakReadonlyArray'
 
 type WeakRequired<T, K extends keyof T> = T & Required<Pick<T, K>>
 
-export namespace ListenerOption {
-	export interface Button {
-		customId?: string
-	}
-	export interface SelectMenu {
-		customId?: string
-	}
+export interface ButtonListenerOption {
+	customId?: string
+}
+export interface SelectMenuListenerOption {
+	customId?: string
 }
 
 export interface BotInitOption {
@@ -36,8 +34,8 @@ export default class Bot extends BotEventManager {
 		}>
 	}
 	public readonly cachedMessages: WeakReadonlyArray<Message>
-	public commands: Array<Command.Text | Command.Slash> // decorators are must able to assign before init
 	public readonly channels: Array<Exclude<GuildChannel, DMChannel>>
+	public commands: Array<Command.Text | Command.Slash> // decorators are must able to assign before init
 	public readonly emojis: Array<GuildEmoji>
 	public readonly guilds: Array<Guild>
 	public readonly ownerId: Snowflake | null
@@ -76,6 +74,7 @@ export default class Bot extends BotEventManager {
 				const commandDatas = (this.commands.filter(command => command.type === 'slash') as Array<Command.Slash>).map(command => command.toRawArray()).flat(1)
 				if (commandDatas.length !== 0) {
 					for (const [ _, guild ] of this.client.guilds.cache) {
+						// eslint-disable-next-line @typescript-eslint/no-floating-promises
 						guild.commands.set(commandDatas)
 					}
 				}
@@ -91,17 +90,17 @@ export default class Bot extends BotEventManager {
 			}, 'guildCreate')
 			this.addRawListener(message => {
 				this.cachedMessages['_array'].push(message)
-				for (const command of this.commands.filter(command => command.type === 'text') as Array<Command.Text>) {
+				for (const command of this.commands.filter(commandItem => commandItem.type === 'text') as Array<Command.Text>) {
 					if (command.argTypes.length === 0) {
-						const matchedAliase = [ command.name, ...command.aliases ].find(aliase => message.content === `${this.prefix}${aliase}`)
-						if (matchedAliase !== undefined) {
-							const textCommandCtx = new Ctx.Text({ bot: this, message, command, matchedAliase })
+						const matchedAlias = [ command.name, ...command.aliases ].find(alias => message.content === `${this.prefix}${alias}`)
+						if (matchedAlias !== undefined) {
+							const textCommandCtx = new Ctx.Text({ bot: this, command, matchedAlias, message })
 							command.callback(textCommandCtx)
 						}
 					} else {
-						const matchedAliase = [ command.name, ...command.aliases ].find(aliase => message.content.startsWith(`${this.prefix}${aliase} `))
-						if (matchedAliase !== undefined) {
-							const textCommandCtx = new Ctx.Text({ bot: this, message, command, matchedAliase })
+						const matchedAlias = [ command.name, ...command.aliases ].find(alias => message.content.startsWith(`${this.prefix}${alias} `))
+						if (matchedAlias !== undefined) {
+							const textCommandCtx = new Ctx.Text({ bot: this, command, matchedAlias, message })
 							command.callback(textCommandCtx)
 						}
 					}
@@ -118,14 +117,14 @@ export default class Bot extends BotEventManager {
 					}
 				} else if (interaction.isCommand()) {
 					if (interaction.options.getSubcommand(false) === null) {
-						for (const command of this.commands.filter(command => command.type === 'slash') as Array<Command.Slash>) {
+						for (const command of this.commands.filter(commandItem => commandItem.type === 'slash') as Array<Command.Slash>) {
 							if ([ command.name, ...command.aliases ].includes(interaction.commandName)) {
-								command.callback(new Ctx.Slash({ bot: this, interaction, command }))
+								command.callback(new Ctx.Slash({ bot: this, command, interaction }))
 								break
 							}
 						}
 					} else {
-						for (const command of this.commands.filter(command => command.type === 'slash') as Array<Command.Slash>) {
+						for (const command of this.commands.filter(commandItem => commandItem.type === 'slash') as Array<Command.Slash>) {
 							const foundSubCommand = command.subCommands.find(subCommand => [ subCommand.name, ...subCommand.aliases ].includes(interaction.commandName))
 							if (foundSubCommand !== undefined) {
 								foundSubCommand.callback(new Ctx.SubSlash({ bot: this, interaction, mainCommand: command }))
@@ -136,21 +135,20 @@ export default class Bot extends BotEventManager {
 				}
 			}, 'interactionCreate')
 			// #endregion listener init
+			this._eventWaiters = {}
 			this.cachedMessages = new WeakReadonlyArray(
 				...this.client.guilds.cache
-					.reduce((p, c) =>
-						p.concat(
-							(c.channels.cache
-								.filter(channel => channel.isText()) as Collection<Snowflake, TextBasedChannels>)
-								.reduce((_p, _c) =>
-									_p.concat([ ..._c.messages.cache.values() ]),
-									[] as Array<Message>
-								)
+					.reduce<Array<Message>>(
+						(p, c) => p.concat(
+							(c.channels.cache.filter(channel => channel.isText()) as Collection<Snowflake, TextBasedChannels>)
+								.reduce<Array<Message>>(
+									(_p, _c) => _p.concat([ ..._c.messages.cache.values() ]),
+									[],
+								),
 						),
-						[] as Array<Message>
-					)
+						[],
+					),
 			)
-			this._eventWaiters = {}
 			this.commands ??= []
 			this.channels = []
 			this.emojis = []
@@ -162,77 +160,9 @@ export default class Bot extends BotEventManager {
 		}
 	}
 	// #region decorator
-	public static event(eventName: keyof BotEvents): (bot: Bot, listenerName: string) => void
-	public static event(bot: Bot, listenerName: BotEventListenerMethodName): void
-	public static event(first: keyof BotEvents | Bot, listenerName?: BotEventListenerMethodName) {
-		if (listenerName === undefined) {
-			const eventName = first as keyof BotEvents
-			return (bot: Bot, _listenerName: string) => {
-				bot.addListener((bot[_listenerName as keyof typeof bot] as (...args: Array<any>) => any).bind(bot), eventName)
-			}
-		} else {
-			const bot = first as Bot
-			if (!listenerName.startsWith('on')) {
-				throw new Error('name of listener is not starting with \'on\'')
-			} else {
-				const eventName = listenerName.replace(/^on([A-Z])/, (_, $1) => $1.toLowerCase()) as keyof BotEvents
-				bot.addListener((bot[listenerName as keyof typeof bot] as (...args: Array<any>) => any).bind(bot), eventName)
-			}
-		}
-	}
-	public static textCommand(option: Partial<Omit<TextCommandInitOption, 'callback'>> = {}) {
-		return (bot: Bot, listenerName: string) => {
-			bot.addCommand(
-				new Command.Text({
-					name: option.name ?? listenerName,
-					aliases: option.aliases ?? [],
-					argTypes: option.argTypes,
-					callback: (bot[listenerName as keyof typeof bot] as (...args: Array<any>) => any).bind(bot),
-				})
-			)
-		}
-	}
-	public static slashCommand(option: Partial<Omit<SlashCommandInitOption, 'callback'>> = {}) {
-		return (bot: Bot, listenerName: string) => {
-			bot.addCommand(
-				new Command.Slash({
-					name: option.name ?? listenerName,
-					aliases: option.aliases,
-					description: option.description,
-					argDefinitions: option.argDefinitions,
-					noSubCommand: option.noSubCommand,
-					callback: (bot[listenerName as keyof typeof bot] as (...args: Array<any>) => any).bind(bot),
-				})
-			)
-		}
-	}
-	public static subSlashCommand(option: WeakRequired<Partial<Omit<SubSlashCommandInitOption, 'callback'>>, 'for'>) {
-		return (bot: Bot, listenerName: string) => {
-			if (option.for === undefined) {
-				throw new Error('for is required option.')
-			} else {
-				const foundCommand = (bot.commands.filter(command => command.type === 'slash') as Array<SlashCommand>).find(command => [ command.name, ...command.aliases ].includes(option.for))
-				if (foundCommand === undefined) {
-					throw new Error(`no such command: ${option.for}`)
-				} else {
-					foundCommand.addSubCommand(
-						new Command.SubSlash({
-							for: option.for,
-							name: option.name ?? listenerName,
-							aliases: option.aliases,
-							description: option.description,
-							argDefinitions: option.argDefinitions,
-							mainCommand: foundCommand,
-							callback: (bot[listenerName as keyof typeof bot] as (...args: Array<any>) => any).bind(bot),
-						})
-					)
-				}
-			}
-		}
-	}
-	public static button(option: ListenerOption.Button = {}) {
-		return (bot: Bot, listenerName: string) => {
-			const listener = bot[listenerName as keyof typeof bot] as (...args: Array<any>) => any
+	public static button(option: ButtonListenerOption = {}) {
+		return (bot: Bot, listenerName: string): void => {
+			const listener = bot[listenerName as keyof typeof bot] as (...args: Array<any>) => void
 			bot.addListener(ctx => {
 				if (option.customId !== undefined) {
 					if (ctx.customId === option.customId) {
@@ -244,9 +174,28 @@ export default class Bot extends BotEventManager {
 			}, 'buttonPress')
 		}
 	}
-	public static selectMenu(option: ListenerOption.SelectMenu = {}) {
-		return (bot: Bot, listenerName: string) => {
-			const listener = bot[listenerName as keyof typeof bot] as (...args: Array<any>) => any
+	public static event(eventName: keyof BotEvents): (bot: Bot, listenerName: string) => void
+	public static event(bot: Bot, listenerName: BotEventListenerMethodName): void
+	// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+	public static event(first: keyof BotEvents | Bot, listenerName?: BotEventListenerMethodName): ((bot: Bot, listenerName: string) => void) | void {
+		if (listenerName === undefined) {
+			const eventName = first as keyof BotEvents
+			return (bot: Bot, _listenerName: string): void => {
+				bot.addListener((bot[_listenerName as keyof typeof bot] as (...args: Array<any>) => void).bind(bot), eventName)
+			}
+		} else {
+			const bot = first as Bot
+			if (!listenerName.startsWith('on')) {
+				throw new Error('name of listener is not starting with \'on\'')
+			} else {
+				const eventName = listenerName.replace(/^on([A-Z])/, (_, $1: string) => $1.toLowerCase()) as keyof BotEvents
+				bot.addListener((bot[listenerName as keyof typeof bot] as (...args: Array<any>) => void).bind(bot), eventName)
+			}
+		}
+	}
+	public static selectMenu(option: SelectMenuListenerOption = {}) {
+		return (bot: Bot, listenerName: string): void => {
+			const listener = bot[listenerName as keyof typeof bot] as (...args: Array<any>) => void
 			bot.addListener(ctx => {
 				if (option.customId !== undefined) {
 					if (ctx.customId === option.customId) {
@@ -258,11 +207,61 @@ export default class Bot extends BotEventManager {
 			}, 'selectMenuSelect')
 		}
 	}
+	public static slashCommand(option: Partial<Omit<SlashCommandInitOption, 'callback'>> = {}) {
+		return (bot: Bot, listenerName: string): void => {
+			bot.addCommand(
+				new Command.Slash({
+					name: option.name ?? listenerName,
+					aliases: option.aliases,
+					description: option.description,
+					argDefinitions: option.argDefinitions,
+					noSubCommand: option.noSubCommand,
+					callback: (bot[listenerName as keyof typeof bot] as (...args: Array<any>) => void).bind(bot),
+				}),
+			)
+		}
+	}
+	public static subSlashCommand(option: WeakRequired<Partial<Omit<SubSlashCommandInitOption, 'callback'>>, 'for'>) {
+		return (bot: Bot, listenerName: string): void => {
+			if (option.for === undefined) {
+				throw new Error('for is required option.')
+			} else {
+				const foundCommand = (bot.commands.filter(command => command.type === 'slash') as Array<Command.Slash>).find(command => [ command.name, ...command.aliases ].includes(option.for))
+				if (foundCommand === undefined) {
+					throw new Error(`no such command: ${option.for}`)
+				} else {
+					foundCommand.addSubCommand(
+						new Command.SubSlash({
+							for: option.for,
+							name: option.name ?? listenerName,
+							aliases: option.aliases,
+							description: option.description,
+							argDefinitions: option.argDefinitions,
+							mainCommand: foundCommand,
+							callback: (bot[listenerName as keyof typeof bot] as (...args: Array<any>) => void).bind(bot),
+						}),
+					)
+				}
+			}
+		}
+	}
+	public static textCommand(option: Partial<Omit<TextCommandInitOption, 'callback'>> = {}) {
+		return (bot: Bot, listenerName: string): void => {
+			bot.addCommand(
+				new Command.Text({
+					name: option.name ?? listenerName,
+					aliases: option.aliases ?? [],
+					argTypes: option.argTypes,
+					callback: (bot[listenerName as keyof typeof bot] as (...args: Array<any>) => void).bind(bot),
+				}),
+			)
+		}
+	}
 	// #endregion decorator
-	public get activities() {
+	public get activities(): Array<ActivitiesOptions> | undefined {
 		return this.client.options.presence?.activities?.map(activity => ({ ...activity }))
 	}
-	public get allowedMentions() {
+	public get allowedMentions(): MessageMentionOptions | undefined {
 		const allowedMentionsOption = this.client.options.allowedMentions
 		if (allowedMentionsOption === undefined) {
 			return undefined
@@ -283,17 +282,17 @@ export default class Bot extends BotEventManager {
 			return option
 		}
 	}
-	public get intents() {
+	public get intents(): Array<IntentFlags> {
 		return [ ...this._clientOption.intents ]
 	}
-	public get latency() {
+	public get latency(): number {
 		return this.client.ws.ping
 	}
-	public get user() {
+	public get user(): User | null {
 		return this.client.user
 	}
-	public absorbCommands(bot: typeof Bot) {
-		if (!(bot.prototype instanceof Bot)) {
+	public absorbCommands(bot: typeof Bot): void {
+		if (!(bot?.prototype instanceof Bot)) {
 			throw new TypeError('target is not extending class Bot')
 		} else {
 			for (const command of bot.prototype.commands ?? []) {
@@ -304,7 +303,7 @@ export default class Bot extends BotEventManager {
 							aliases: [ ...command.aliases ],
 							argTypes: [ ...command.argTypes ],
 							callback: command.callback,
-						})
+						}),
 					)
 				} else {
 					const createdCommand = new Command.Slash({
@@ -326,7 +325,7 @@ export default class Bot extends BotEventManager {
 									argDefinitions: subCommand.argDefinitions,
 									mainCommand: createdCommand,
 									callback: subCommand.callback,
-								})
+								}),
 							)
 						}
 					}
@@ -335,12 +334,12 @@ export default class Bot extends BotEventManager {
 			}
 		}
 	}
-	public absorbCommandsSyncByPath(path: string) {
+	public async absorbCommandsByPath(path: string): Promise<void> {
 		let imported
 		try {
-			imported = require($path.isAbsolute(path) ? path : $path.join(process.cwd(), path)) as { default: typeof Bot }
-		} catch (error: any) {
-			if (error.code === 'MODULE_NOT_FOUND') {
+			imported = await import($path.isAbsolute(path) ? path : $path.join(process.cwd(), path)) as { default: typeof Bot; }
+		} catch (error) {
+			if ((error as { code: string; }).code === 'MODULE_NOT_FOUND') {
 				throw new Error(`no file found with path '${path}'`)
 			} else {
 				throw error
@@ -349,15 +348,16 @@ export default class Bot extends BotEventManager {
 		if (imported?.default === undefined) {
 			throw new TypeError('source file is not exporting class Bot')
 		} else {
-			return this.absorbCommands(imported.default)
+			this.absorbCommands(imported.default)
 		}
 	}
-	public async absorbCommandsByPath(path: string) {
+	public absorbCommandsSyncByPath(path: string): void {
 		let imported
 		try {
-			imported = await import($path.isAbsolute(path) ? path : $path.join(process.cwd(), path)) as { default: typeof Bot }
-		} catch (error: any) {
-			if (error.code === 'MODULE_NOT_FOUND') {
+			// eslint-disable-next-line @typescript-eslint/no-var-requires
+			imported = require($path.isAbsolute(path) ? path : $path.join(process.cwd(), path)) as { default: typeof Bot; }
+		} catch (error) {
+			if ((error as { code: string; }).code === 'MODULE_NOT_FOUND') {
 				throw new Error(`no file found with path '${path}'`)
 			} else {
 				throw error
@@ -366,10 +366,10 @@ export default class Bot extends BotEventManager {
 		if (imported?.default === undefined) {
 			throw new TypeError('source file is not exporting class Bot')
 		} else {
-			return this.absorbCommands(imported.default)
+			this.absorbCommands(imported.default)
 		}
 	}
-	public addCommand(command: Command.Text | Command.Slash) {
+	public addCommand(command: Command.Text | Command.Slash): void {
 		if (!(command instanceof Command.Text) && !(command instanceof Command.Slash)) {
 			throw new TypeError('type of command is not TextCommand or SlashCommand')
 		} else {
@@ -377,14 +377,14 @@ export default class Bot extends BotEventManager {
 			this.commands.push(command)
 		}
 	}
-	public async changePresence(option: Omit<PresenceData, 'shardId'>) {
+	public async changePresence(option: Omit<PresenceData, 'shardId'>): Promise<void> {
 		if (!this.isReady()) {
 			throw new Error('client is not readied')
 		} else {
 			this.client.user.setPresence(option)
 		}
 	}
-	public async createGuild(name: string, option: { region?: string, icon?: string, code?: string }) {
+	public async createGuild(name: string, option: { region?: string; icon?: string; code?: string; }): Promise<Guild> {
 		let createdGuild
 		if (option.code !== undefined) {
 			const template = await this.client.fetchGuildTemplate(option.code)
@@ -397,16 +397,16 @@ export default class Bot extends BotEventManager {
 		}
 		return createdGuild
 	}
-	public async deleteInvite(invite: Invite) {
+	public async deleteInvite(invite: Invite): Promise<void> {
 		await invite.delete()
 	}
-	public async fetchApplicationInfo() {
-		return await this.client.application?.fetch()
+	public async fetchApplicationInfo(): Promise<ClientApplication | null> {
+		return await this.client.application?.fetch() ?? null
 	}
-	public isOwner(user: User) {
+	public isOwner(user: User): boolean {
 		return this.ownerId === user.id
 	}
-	public isReady(): this is this & { client: Client<true> } {
+	public isReady(): this is this & { client: Client<true>; } {
 		return this.client.readyAt !== null
 	}
 	public async run(token: string): Promise<void> {
@@ -432,7 +432,7 @@ export default class Bot extends BotEventManager {
 			} else {
 				const waiter = {
 					check: option.check,
-					resolve: (..._: BotEvents[K]) => {},
+					resolve: (..._: BotEvents[K]): void => {},
 				}
 				this._eventWaiters[eventName] ??= []
 				const nonUndefinedEventWaiters = this._eventWaiters[eventName]!
@@ -442,16 +442,16 @@ export default class Bot extends BotEventManager {
 						nonUndefinedEventWaiters.splice(nonUndefinedEventWaiters.indexOf(waiter), 1)
 						reject(new Error('timed out'))
 					}, option.timeout)
-					waiter.resolve = (...args: BotEvents[K]) => {
+					waiter.resolve = (...args: BotEvents[K]): void => {
 						clearTimeout(timeout)
 						resolve(args)
 					}
 				} else {
-					waiter.resolve = (...args: BotEvents[K]) => {
+					waiter.resolve = (...args: BotEvents[K]): void => {
 						resolve(args)
 					}
 				}
-				const listener = (...args: BotEvents[K]) => {
+				const listener = (...args: BotEvents[K]): void => {
 					if (waiter.check !== undefined) {
 						if (waiter.check(...args)) {
 							waiter.resolve(...args)

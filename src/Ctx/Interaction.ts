@@ -1,28 +1,29 @@
-import {
-	MessageComponentInteraction, CommandInteraction, Guild, GuildMember, Message, MessageEmbed, User,
-	InteractionReplyOptions, TextBasedChannels,
-} from 'discord.js'
-import Base, { BaseCtxInitOption, MessageSendOption } from './Base'
+import { MessageEmbed } from 'discord.js'
+import type { CommandInteraction, Guild, GuildMember, Message, MessageComponentInteraction, User } from 'discord.js'
+// eslint-disable-next-line @typescript-eslint/no-duplicate-imports
+import type { InteractionReplyOptions, TextBasedChannels } from 'discord.js'
+import Base from './Base'
+import type { BaseCtxInitOption, MessageSendOption } from './Base'
 
-export interface InteractionCtxInitOption extends BaseCtxInitOption {
-	readonly interaction: MessageComponentInteraction | CommandInteraction
+export interface InteractionCtxInitOption<T extends CommandInteraction | MessageComponentInteraction> extends BaseCtxInitOption {
+	readonly interaction: T
 }
-export default abstract class Interaction extends Base {
-	public readonly interaction: MessageComponentInteraction | CommandInteraction
-	public readonly guild: Guild | null
+export default abstract class Interaction<T extends CommandInteraction | MessageComponentInteraction> extends Base {
 	public readonly channel: TextBasedChannels
-	public readonly user: GuildMember | User
-	constructor(option: InteractionCtxInitOption) {
+	public readonly guild: Guild | null
+	public readonly interaction: T
+	public override readonly user: GuildMember | User
+	constructor(option: InteractionCtxInitOption<T>) {
 		super({ bot: option.bot })
-		this.interaction = option.interaction
-		this.guild = this.interaction.guild
-		this.channel = this.interaction.channel!
-		this.user = (this.interaction.member as GuildMember | null) ?? this.interaction.user
+		const { interaction } = option
+		this.channel = interaction.channel!
+		this.guild = interaction.guild
+		this.interaction = interaction
+		this.user = (interaction.member as GuildMember | null) ?? interaction.user
 	}
-	public abstract readonly type: string
-	public override async send(content: string | MessageEmbed, option?: MessageSendOption): Promise<Message>
-	public override async send(option: InteractionReplyOptions & MessageSendOption): Promise<Message>
-	public override async send(content: string | MessageEmbed | (InteractionReplyOptions & MessageSendOption), option: MessageSendOption = {}) {
+	public override async send(content: string | MessageEmbed, option?: MessageSendOption): Promise<Message | undefined>
+	public override async send(option: InteractionReplyOptions & MessageSendOption): Promise<Message | undefined>
+	public override async send(content: string | MessageEmbed | (InteractionReplyOptions & MessageSendOption), option: MessageSendOption = {}): Promise<Message | undefined> {
 		const dSendOption =
 			typeof content === 'string'
 			 ? { content }
@@ -30,20 +31,20 @@ export default abstract class Interaction extends Base {
 			  ? { embeds: [ content ] }
 			  : typeof content === 'object' && content !== null
 			   ? content
-			   : (() => { throw new TypeError('invalid type') })()
+			   : ((): never => { throw new TypeError('invalid type') })()
 		const sendOption =
 			typeof content === 'string' || content instanceof MessageEmbed
 			 ? option
 			 : typeof content === 'object' && content !== null
 			  ? content
-			  : (() => { throw new TypeError('invalid type') })()
+			  : ((): never => { throw new TypeError('invalid type') })()
 		const reply = await this.interaction.reply({ ...dSendOption, fetchReply: true })
 		const sentReply = this.interaction.channel?.messages.cache.get(reply.id)
 		if (sentReply !== undefined) {
 			if (sendOption.deleteAfter !== undefined) {
-				setTimeout(() => {
+				setTimeout(async () => {
 					if (sentReply.deletable) {
-						sentReply.delete()
+						await sentReply.delete()
 					}
 				}, sendOption.deleteAfter)
 			}

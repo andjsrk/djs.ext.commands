@@ -1,20 +1,26 @@
-import { ApplicationCommandData, ApplicationCommandSubCommandData } from 'discord.js'
-import Base, { BaseCommandInitOption } from './Base'
-import BaseSlashCtx from '../Ctx/BaseSlash'
-import { PureSlashArgType, OptionalSlashArgType } from '../Ctx/BaseSlash'
+import type { ApplicationCommandData, ApplicationCommandSubCommandData } from 'discord.js'
+import Base from './Base'
+import type { BaseCommandInitOption } from './Base'
+import type BaseSlashCtx from '../Ctx/BaseSlash'
+import type { OptionalSlashArgType, PureSlashArgType } from '../Ctx/BaseSlash'
 
-export type SlashArg<T extends PureSlashArgType | OptionalSlashArgType> = { name: string, description?: string, type: T }
+export interface SlashArg<T extends PureSlashArgType | OptionalSlashArgType> {
+	type: T
+	name: string
+	description?: string
+}
 export type SlashArgList = Array<SlashArg<PureSlashArgType>> | [ ...Array<SlashArg<PureSlashArgType>>, ...Array<SlashArg<OptionalSlashArgType>> ]
 
 export interface BaseSlashCommandInitOption<T extends BaseSlashCtx> extends BaseCommandInitOption {
 	readonly description: string | undefined
 	readonly argDefinitions: SlashArgList | undefined
-	readonly callback: (ctx: T) => any
+	readonly callback: (ctx: T) => void
 }
 export default abstract class BaseSlash<T extends BaseSlashCtx> extends Base {
-	public readonly description: string | undefined
 	public readonly argDefinitions: SlashArgList
-	public callback: (ctx: T) => any
+	public callback: (ctx: T) => void
+	public readonly description: string | undefined
+	public abstract override readonly type: string
 	constructor(option: BaseSlashCommandInitOption<T>) {
 		super({ name: option.name, aliases: option.aliases })
 		if (/[A-Z]/.test(option.name)) {
@@ -28,7 +34,7 @@ export default abstract class BaseSlash<T extends BaseSlashCtx> extends Base {
 		} else {
 			if (option.argDefinitions !== undefined) {
 				const firstOptionalArgIndex = option.argDefinitions.findIndex(argDefinition => argDefinition.type.endsWith('?'))
-				if (-1 !== firstOptionalArgIndex && !option.argDefinitions.slice(firstOptionalArgIndex).every(argDefinition => argDefinition.type.endsWith('?'))) {
+				if (firstOptionalArgIndex !== -1 && !option.argDefinitions.slice(firstOptionalArgIndex).every(argDefinition => argDefinition.type.endsWith('?'))) {
 					throw new TypeError(`non optional argument ${option.argDefinitions.slice(firstOptionalArgIndex).find(argDefinition => !argDefinition.type.endsWith('?'))!.name} does not precede optional argument`)
 				} else {
 					for (let i = 0; i < option.argDefinitions.length; i++) {
@@ -55,10 +61,9 @@ export default abstract class BaseSlash<T extends BaseSlashCtx> extends Base {
 				}
 			}
 			this.description = option.description
-			this.argDefinitions = [ ...(option.argDefinitions ?? [] as any) ]
+			this.argDefinitions = [ ...option.argDefinitions ?? [] ]
 			this.callback = option.callback
 		}
 	}
-	public abstract override readonly type: string
 	public abstract toRawArray(): Array<ApplicationCommandData | ApplicationCommandSubCommandData>
 }

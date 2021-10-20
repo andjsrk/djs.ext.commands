@@ -1,9 +1,10 @@
-import {
-	Guild, GuildMember, Message, MessageEmbed, Role, TextChannel, User, VoiceChannel,
-	MessageOptions, TextBasedChannels,
-} from 'discord.js'
-import Base, { BaseCtxInitOption, MessageSendOption } from './Base'
-import TextCommand from '../Command/Text'
+import { MessageEmbed } from 'discord.js'
+import type { Guild, GuildMember, Message, Role, TextChannel, User, VoiceChannel } from 'discord.js'
+// eslint-disable-next-line @typescript-eslint/no-duplicate-imports
+import type { MessageOptions, TextBasedChannels } from 'discord.js'
+import Base from './Base'
+import type { BaseCtxInitOption, MessageSendOption } from './Base'
+import type TextCommand from '../Command/Text'
 
 export type PureTextArgType =
 	 | 'string'
@@ -45,6 +46,7 @@ export type ParsedTextArgTypeList<A extends TextArgTypeList> =
 	A extends []
 	 ? []
 	 : A extends [ infer B, ...infer C ]
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	  ? C extends Array<any>
 	   ? B extends `...${infer T}`
 	    ? T extends PureTextArgType
@@ -61,51 +63,35 @@ export type ParsedTextArgTypeList<A extends TextArgTypeList> =
 export interface TextCtxInitOption extends BaseCtxInitOption {
 	readonly message: Message
 	readonly command: TextCommand
-	readonly matchedAliase: string
+	readonly matchedAlias: string
 }
 export default class Text<ArgTypeList extends TextArgTypeList = TextArgTypeList> extends Base {
-	public readonly message: Message
-	public readonly command: TextCommand
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public readonly args: ParsedTextArgTypeList<ArgTypeList> extends never ? Array<any> : ParsedTextArgTypeList<ArgTypeList>
 	public readonly channel: TextBasedChannels
+	public readonly command: TextCommand
 	public readonly content: string
 	public readonly guild: Guild | null
-	public readonly matchedAliase: string
+	public readonly matchedAlias: string
 	public readonly me: GuildMember | User
-	public readonly user: GuildMember | User
+	public readonly message: Message
+	public override readonly type
+	public override readonly user: GuildMember | User
 	constructor(option: TextCtxInitOption) {
 		super({ bot: option.bot })
-		this.message = option.message
+		const { message } = option
+		this.args = this._parseRaw(message.content)
+		this.channel = message.channel
 		this.command = option.command
-		this.args = this.parseRawToArgs(this.message.content) as ParsedTextArgTypeList<ArgTypeList>
-		this.channel = this.message.channel
-		this.content = this.message.content
-		this.guild = this.message.guild
-		this.matchedAliase = option.matchedAliase
+		this.content = message.content
+		this.guild = message.guild
+		this.matchedAlias = option.matchedAlias
 		this.me = this.guild?.me ?? this.bot.client.user!
+		this.message = message
+		this.type = 'text'
 		this.user = this.message.member ?? this.message.author
 	}
-	protected parseRawToArgs(raw: string) {
-		const args: Array<any> = []
-		const rawArgs = raw.replace(`${this.bot.prefix}${this.matchedAliase}${this.command.argTypes.length !== 0 ? ' ' : ''}`, '').split(' ')
-		const isPureArgType = (argType: PureTextArgType | RestTextArgType): argType is PureTextArgType => !argType.startsWith('...')
-		for (const argType of this.command.argTypes) {
-			if (isPureArgType(argType)) {
-				const shifted = rawArgs.shift()
-				if (shifted === undefined) {
-					args.push(null)
-				} else {
-					args.push(this.parseOneArg(argType, shifted))
-				}
-			} else {
-				const pureArgType = argType.replace('...', '') as PureTextArgType
-				args.push(rawArgs.map(rawArg => this.parseOneArg(pureArgType, rawArg)))
-				break
-			}
-		}
-		return args
-	}
-	protected parseOneArg(argType: PureTextArgType, content: string) {
+	protected _parseOneRawArg(argType: PureTextArgType, content: string): ParsedTextArgTypePiece<PureTextArgType> | null {
 		if (argType === 'string') {
 			return content
 		} else {
@@ -123,7 +109,7 @@ export default class Text<ArgTypeList extends TextArgTypeList = TextArgTypeList>
 				voiceChannel: /^<#([0-9]+)>$/,
 			}
 			const matched = content.match(regexp[argType])
-			if (matched !== null && matched[0] !== undefined) {
+			if (matched?.[0] !== undefined) {
 				switch (argType) {
 					case 'number':
 						return Number(matched[0])
@@ -140,18 +126,40 @@ export default class Text<ArgTypeList extends TextArgTypeList = TextArgTypeList>
 					case 'role':
 						return this.message.guild?.roles.cache.get(matched[1]!) ?? null
 					case 'channel':
-						return this.message.guild?.channels.cache.get(matched[1]!) ?? null
+						return this.message.guild?.channels.cache.get(matched[1]!) as TextChannel | VoiceChannel | undefined ?? null
 					case 'textChannel':
-						return this.message.guild?.channels.cache.filter(channel => channel.type === 'GUILD_TEXT').get(matched[1]!) ?? null
+						return this.message.guild?.channels.cache.filter(channel => channel.type === 'GUILD_TEXT').get(matched[1]!) as TextChannel | undefined ?? null
 					case 'voiceChannel':
-						return this.message.guild?.channels.cache.filter(channel => channel.type === 'GUILD_VOICE').get(matched[1]!) ?? null
+						return this.message.guild?.channels.cache.filter(channel => channel.type === 'GUILD_VOICE').get(matched[1]!) as VoiceChannel | undefined ?? null
+					default:
+						return null
 				}
 			} else {
 				return null
 			}
 		}
 	}
-	public async reply(content: string | MessageEmbed | MessageOptions) {
+	protected _parseRaw(raw: string): ParsedTextArgTypeList<ArgTypeList> {
+		const args: Array<unknown> = []
+		const rawArgs = raw.replace(`${this.bot.prefix}${this.matchedAlias}${this.command.argTypes.length !== 0 ? ' ' : ''}`, '').split(' ')
+		const isPureArgType = (argType: PureTextArgType | RestTextArgType): argType is PureTextArgType => !argType.startsWith('...')
+		for (const argType of this.command.argTypes) {
+			if (isPureArgType(argType)) {
+				const shifted = rawArgs.shift()
+				if (shifted === undefined) {
+					args.push(null)
+				} else {
+					args.push(this._parseOneRawArg(argType, shifted))
+				}
+			} else {
+				const pureArgType = argType.replace('...', '') as PureTextArgType
+				args.push(rawArgs.map(rawArg => this._parseOneRawArg(pureArgType, rawArg)))
+				break
+			}
+		}
+		return args as ParsedTextArgTypeList<ArgTypeList>
+	}
+	public async reply(content: string | MessageEmbed | MessageOptions): Promise<Message> {
 		let repliedMessage: Message
 		if (typeof content === 'string') {
 			repliedMessage = await this.message.reply({ content })
@@ -164,7 +172,7 @@ export default class Text<ArgTypeList extends TextArgTypeList = TextArgTypeList>
 	}
 	public override async send(content: string | MessageEmbed, option?: MessageSendOption): Promise<Message>
 	public override async send(option: MessageOptions & MessageSendOption): Promise<Message>
-	public override async send(content: string | MessageEmbed | (MessageOptions & MessageSendOption), option: MessageSendOption = {}) {
+	public override async send(content: string | MessageEmbed | (MessageOptions & MessageSendOption), option: MessageSendOption = {}): Promise<Message> {
 		const dSendOption =
 			typeof content === 'string'
 			 ? { content }
@@ -172,18 +180,18 @@ export default class Text<ArgTypeList extends TextArgTypeList = TextArgTypeList>
 			  ? { embeds: [ content ] }
 			  : typeof content === 'object' && content !== null
 			   ? content
-			   : (() => { throw new TypeError('invalid type') })()
+			   : ((): never => { throw new TypeError('invalid type') })()
 		const sendOption =
 			typeof content === 'string' || content instanceof MessageEmbed
 			 ? option
 			 : typeof content === 'object' && content !== null
 			  ? content
-			  : (() => { throw new TypeError() })()
+			  : ((): never => { throw new TypeError() })()
 		const sentMsg = await this.channel.send(dSendOption)
 		if (sendOption.deleteAfter !== undefined) {
-			setTimeout(() => {
+			setTimeout(async () => {
 				if (sentMsg.deletable) {
-					sentMsg.delete()
+					await sentMsg.delete()
 				}
 			}, sendOption.deleteAfter)
 		}

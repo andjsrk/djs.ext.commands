@@ -9,11 +9,11 @@ export interface ClientManagerInitOption {
 	readonly intents?: Array<IntentFlags>
 }
 export default class ClientManager {
-	public readonly client: Client
 	protected readonly _clientOption: ClientOption
+	public readonly client: Client
 	constructor(option: ClientManagerInitOption) {
 		const clientOption: ClientOption = {
-			intents: [ IntentFlags.GUILDS, IntentFlags.GUILD_MESSAGES ]
+			intents: [ IntentFlags.GUILDS, IntentFlags.GUILD_MESSAGES ],
 		}
 		if (option.intents !== undefined) {
 			clientOption.intents = option.intents

@@ -1,11 +1,11 @@
-import { ClientEvents } from 'discord.js'
+import type { ClientEvents } from 'discord.js'
 import ClientManager from './ClientManager'
-import * as Ctx from './Ctx'
-import { IntentFlags } from './Intents'
+import type * as Ctx from './Ctx'
+import type { IntentFlags } from './Intents'
 
+/* eslint-disable array-element-newline */
 export const CLIENT_EVENT_NAMES: Array<keyof ClientEvents> = [
-	'debug', 'error', 'warn',
-	'ready', 'rateLimit', 'invalidRequestWarning', 'invalidated',
+	'debug', 'error', 'warn', 'ready', 'rateLimit', 'invalidRequestWarning', 'invalidated',
 	'applicationCommandCreate', 'applicationCommandDelete', 'applicationCommandUpdate',
 	'channelCreate', 'channelDelete', 'channelPinsUpdate', 'channelUpdate',
 	'emojiCreate', 'emojiDelete', 'emojiUpdate',
@@ -29,26 +29,26 @@ export const CLIENT_EVENT_NAMES: Array<keyof ClientEvents> = [
 	'voiceStateUpdate',
 	'webhookUpdate',
 ]
-export const PURE_BOT_EVENT_NAMES: Array<keyof PureBotEvents> = [
-	'buttonPress', 'selectMenuSelect',
-]
-export const BOT_EVENT_NAMES: Array<keyof BotEvents> = [
-	...CLIENT_EVENT_NAMES,
-	...PURE_BOT_EVENT_NAMES
-]
-
+/* eslint-enable array-element-newline */
 export interface PureBotEvents {
 	buttonPress: [ ctx: Ctx.Button ]
 	selectMenuSelect: [ ctx: Ctx.SelectMenu ]
 }
 export type BotEvents = PureBotEvents & ClientEvents
+export const PURE_BOT_EVENT_NAMES: Array<keyof PureBotEvents> = [
+	'buttonPress', 'selectMenuSelect',
+]
+export const BOT_EVENT_NAMES: Array<keyof BotEvents> = [
+	...CLIENT_EVENT_NAMES,
+	...PURE_BOT_EVENT_NAMES,
+]
 export type BotEventListenerMethodName<T extends keyof ClientEvents = keyof ClientEvents> = `on${Capitalize<T>}`
 
 export interface BotEventManagerInitOption {
 	readonly intents?: Array<IntentFlags>
 }
 export default abstract class BotEventManager extends ClientManager {
-	protected _eventListeners: Partial<{ [K in keyof BotEvents]: Array<(...args: BotEvents[K]) => any> }>
+	protected _eventListeners: Partial<{ [K in keyof BotEvents]: Array<(...args: BotEvents[K]) => void> }>
 	constructor(option: BotEventManagerInitOption) {
 		super({ intents: option.intents })
 		this._eventListeners ??= {}
@@ -59,25 +59,16 @@ export default abstract class BotEventManager extends ClientManager {
 					const listeners = this._eventListeners[guardedEventName]
 					if (listeners !== undefined) {
 						for (const listener of listeners) {
-							(listener as (...args: ClientEvents[keyof ClientEvents]) => any)(...args)
+							(listener as (..._args: ClientEvents[keyof ClientEvents]) => void)(...args)
 						}
 					}
 				}, guardedEventName)
 			}
 		}
 	}
-	public addRawListener<K extends keyof ClientEvents>(listener: ((...args: ClientEvents[K]) => any) & { name: K }): void
-	public addRawListener<K extends keyof ClientEvents>(listener: (...args: ClientEvents[K]) => any, eventName: K): void
-	public addRawListener<K extends keyof ClientEvents>(listener: (...args: ClientEvents[K]) => any, eventName?: K) {
-		if (typeof listener !== 'function') {
-			throw new TypeError('type of listener is not function')
-		} else {
-			this.client.on(eventName ?? listener.name as K, listener)
-		}
-	}
-	public addListener<K extends keyof BotEvents>(listener: ((...args: BotEvents[K]) => any) & { name: K }): void
-	public addListener<K extends keyof BotEvents>(listener: (...args: BotEvents[K]) => any, eventName: K): void
-	public addListener<K extends keyof BotEvents>(listener: (...args: BotEvents[K]) => any, eventName?: K) {
+	public addListener<K extends keyof BotEvents>(listener: ((...args: BotEvents[K]) => void) & { name: K; }): void
+	public addListener<K extends keyof BotEvents>(listener: (...args: BotEvents[K]) => void, eventName: K): void
+	public addListener<K extends keyof BotEvents>(listener: (...args: BotEvents[K]) => void, eventName?: K): void {
 		if (typeof listener !== 'function') {
 			throw new TypeError('type of listener is not function')
 		} else {
@@ -87,13 +78,22 @@ export default abstract class BotEventManager extends ClientManager {
 			} else {
 				this._eventListeners ??= {}
 				this._eventListeners[realEventName] ??= []
-				this._eventListeners[realEventName]!.push(listener as (...args: Array<any>) => any)
+				this._eventListeners[realEventName]!.push(listener as (...args: Array<any>) => void)
 			}
 		}
 	}
-	public removeListener<K extends keyof BotEvents>(listener: ((...args: BotEvents[K]) => any) & { name: K }): void
-	public removeListener<K extends keyof BotEvents>(listener: (...args: BotEvents[K]) => any, eventName: K): void
-	public removeListener<K extends keyof BotEvents>(listener: (...args: BotEvents[K]) => any, eventName?: K) {
+	public addRawListener<K extends keyof ClientEvents>(listener: ((...args: ClientEvents[K]) => void) & { name: K; }): void
+	public addRawListener<K extends keyof ClientEvents>(listener: (...args: ClientEvents[K]) => void, eventName: K): void
+	public addRawListener<K extends keyof ClientEvents>(listener: (...args: ClientEvents[K]) => void, eventName?: K): void {
+		if (typeof listener !== 'function') {
+			throw new TypeError('type of listener is not function')
+		} else {
+			this.client.on(eventName ?? listener.name as K, listener)
+		}
+	}
+	public removeListener<K extends keyof BotEvents>(listener: ((...args: BotEvents[K]) => void) & { name: K; }): void
+	public removeListener<K extends keyof BotEvents>(listener: (...args: BotEvents[K]) => void, eventName: K): void
+	public removeListener<K extends keyof BotEvents>(listener: (...args: BotEvents[K]) => void, eventName?: K): void {
 		if (typeof listener !== 'function') {
 			throw new TypeError('type of listener is not function')
 		} else {
@@ -101,8 +101,8 @@ export default abstract class BotEventManager extends ClientManager {
 			if (!BOT_EVENT_NAMES.includes(realEventName)) {
 				throw new Error(`invalid event name: ${realEventName}`)
 			} else {
-				const foundIndex = (this._eventListeners[realEventName] ?? [] as Array<(...args: BotEvents[K]) => any>).indexOf(listener)
-				if (-1 !== foundIndex) {
+				const foundIndex = (this._eventListeners[realEventName] ?? [] as Array<(...args: BotEvents[K]) => void>).indexOf(listener)
+				if (foundIndex !== -1) {
 					this._eventListeners[realEventName]!.splice(foundIndex, 1)
 				}
 			}
