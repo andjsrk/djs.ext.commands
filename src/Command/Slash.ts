@@ -10,7 +10,7 @@ export interface SlashCommandInitOption extends BaseSlashCommandInitOption<Ctx.S
 export default class Slash extends BaseSlash<Ctx.Slash> {
 	public readonly noSubCommand: boolean
 	public readonly subCommands: Array<SubSlash>
-	public override readonly type = 'slash'
+	public override readonly type
 	constructor(option: SlashCommandInitOption) {
 		super({
 			name: option.name,
@@ -24,6 +24,7 @@ export default class Slash extends BaseSlash<Ctx.Slash> {
 		} else {
 			this.noSubCommand = option.noSubCommand ?? true
 			this.subCommands = []
+			this.type = 'slash' as const
 		}
 	}
 	public addSubCommand(subCommand: SubSlash): void {

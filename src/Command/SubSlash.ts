@@ -11,7 +11,7 @@ export interface SubSlashCommandInitOption extends BaseSlashCommandInitOption<Ct
 export default class SubSlash extends BaseSlash<Ctx.SubSlash> {
 	public readonly for: string
 	public readonly mainCommand: Slash
-	public override readonly type = 'subSlash'
+	public override readonly type
 	constructor(option: SubSlashCommandInitOption) {
 		super({
 			name: option.name,
@@ -27,6 +27,7 @@ export default class SubSlash extends BaseSlash<Ctx.SubSlash> {
 		} else {
 			this.for = option.for
 			this.mainCommand = option.mainCommand
+			this.type = 'subSlash' as const
 		}
 	}
 	public toRawArray(): Array<ApplicationCommandSubCommandData> {

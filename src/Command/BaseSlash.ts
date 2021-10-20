@@ -20,7 +20,6 @@ export default abstract class BaseSlash<T extends BaseSlashCtx> extends Base {
 	public readonly argDefinitions: SlashArgList
 	public callback: (ctx: T) => void
 	public readonly description: string | undefined
-	public abstract override readonly type: string
 	constructor(option: BaseSlashCommandInitOption<T>) {
 		super({ name: option.name, aliases: option.aliases })
 		if (/[A-Z]/.test(option.name)) {

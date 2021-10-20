@@ -10,7 +10,7 @@ export interface TextCommandInitOption extends BaseCommandInitOption {
 export default class Text<ArgTypeList extends TextArgTypeList = TextArgTypeList> extends Base {
 	public readonly argTypes: ArgTypeList
 	public callback: (ctx: Ctx.Text<ArgTypeList>) => void
-	public override readonly type = 'text'
+	public override readonly type
 	constructor(option: TextCommandInitOption) {
 		super({ name: option.name, aliases: option.aliases })
 		if (option.argTypes !== undefined) {
@@ -21,5 +21,6 @@ export default class Text<ArgTypeList extends TextArgTypeList = TextArgTypeList>
 		}
 		this.argTypes = [ ...(option.argTypes ?? []) as ArgTypeList ]
 		this.callback = option.callback
+		this.type = 'text' as const
 	}
 }
