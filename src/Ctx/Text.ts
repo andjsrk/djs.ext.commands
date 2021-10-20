@@ -80,7 +80,6 @@ export default class Text<ArgTypeList extends TextArgTypeList = TextArgTypeList>
 	constructor(option: TextCtxInitOption) {
 		super({ bot: option.bot })
 		const { message } = option
-		this.args = this._parseRaw(message.content)
 		this.channel = message.channel
 		this.command = option.command
 		this.content = message.content
@@ -90,6 +89,7 @@ export default class Text<ArgTypeList extends TextArgTypeList = TextArgTypeList>
 		this.message = message
 		this.type = 'text'
 		this.user = this.message.member ?? this.message.author
+		this.args = this._parseRaw(message.content)
 	}
 	protected _parseOneRawArg(argType: PureTextArgType, content: string): ParsedTextArgTypePiece<PureTextArgType> | null {
 		if (argType === 'string') {
