@@ -91,18 +91,14 @@ export default class Bot extends BotEventManager {
 			this.addRawListener(message => {
 				this.cachedMessages['_array'].push(message)
 				for (const command of this.commands.filter(commandItem => commandItem.type === 'text') as Array<Command.Text>) {
-					if (command.argTypes.length === 0) {
-						const matchedAlias = [ command.name, ...command.aliases ].find(alias => message.content === `${this.prefix}${alias}`)
-						if (matchedAlias !== undefined) {
-							const textCommandCtx = new Ctx.Text({ bot: this, command, matchedAlias, message })
-							command.callback(textCommandCtx)
-						}
-					} else {
-						const matchedAlias = [ command.name, ...command.aliases ].find(alias => message.content.startsWith(`${this.prefix}${alias} `))
-						if (matchedAlias !== undefined) {
-							const textCommandCtx = new Ctx.Text({ bot: this, command, matchedAlias, message })
-							command.callback(textCommandCtx)
-						}
+					const matchedAlias = [ command.name, ...command.aliases ].find(
+						alias => command.argTypes.length === 0
+						 ? message.content === `${this.prefix}${alias}`
+						 : message.content.startsWith(`${this.prefix}${alias} `),
+					)
+					if (matchedAlias !== undefined) {
+						const textCommandCtx = new Ctx.Text({ bot: this, command, matchedAlias, message })
+						command.callback(textCommandCtx)
 					}
 				}
 			}, 'messageCreate')
