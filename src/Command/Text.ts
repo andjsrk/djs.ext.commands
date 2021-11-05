@@ -15,7 +15,7 @@ export default class Text<ArgTypeList extends TextArgTypeList = TextArgTypeList>
 		super({ name: option.name, aliases: option.aliases })
 		if (option.argTypes !== undefined) {
 			const firstRestArgIndex = option.argTypes.findIndex(argType => argType.startsWith('...'))
-			if (option.argTypes.length - 1 - firstRestArgIndex > 0) { // there should not be any argument types back of rest argument type
+			if (firstRestArgIndex !== -1 && option.argTypes.length - 1 - firstRestArgIndex > 0) { // there should not be any argument types back of rest argument type
 				throw new Error('there is argument type back of rest argument type')
 			}
 		}
