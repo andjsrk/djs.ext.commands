@@ -8,12 +8,12 @@ class Base {
         else if (option.aliases !== undefined && !Array.isArray(option.aliases)) {
             throw new TypeError('type of aliases is not array');
         }
-        else if (option.aliases !== undefined && option.aliases.some(aliase => typeof aliase !== 'string')) {
+        else if (option.aliases?.some(alias => typeof alias !== 'string') ?? false) {
             throw new TypeError('type of item of aliases is not string');
         }
         else {
             this.name = option.name;
-            this.aliases = [...(option.aliases ?? [])];
+            this.aliases = [...option.aliases ?? []];
         }
     }
 }

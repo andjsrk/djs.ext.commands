@@ -9,8 +9,8 @@ const BaseSlash_1 = require("./BaseSlash");
 class Slash extends BaseSlash_1.default {
     constructor(option) {
         super({ bot: option.bot, interaction: option.interaction });
-        this.type = 'slash';
         this.command = option.command;
+        this.type = 'slash';
     }
 }
 exports.default = Slash;

@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BOT_EVENT_NAMES = exports.PURE_BOT_EVENT_NAMES = exports.CLIENT_EVENT_NAMES = void 0;
 const ClientManager_1 = require("./ClientManager");
+/* eslint-disable array-element-newline */
 exports.CLIENT_EVENT_NAMES = [
-    'debug', 'error', 'warn',
-    'ready', 'rateLimit', 'invalidRequestWarning', 'invalidated',
+    'debug', 'error', 'warn', 'ready', 'rateLimit', 'invalidRequestWarning', 'invalidated',
     'applicationCommandCreate', 'applicationCommandDelete', 'applicationCommandUpdate',
     'channelCreate', 'channelDelete', 'channelPinsUpdate', 'channelUpdate',
     'emojiCreate', 'emojiDelete', 'emojiUpdate',
@@ -33,7 +33,7 @@ exports.PURE_BOT_EVENT_NAMES = [
 ];
 exports.BOT_EVENT_NAMES = [
     ...exports.CLIENT_EVENT_NAMES,
-    ...exports.PURE_BOT_EVENT_NAMES
+    ...exports.PURE_BOT_EVENT_NAMES,
 ];
 class BotEventManager extends ClientManager_1.default {
     constructor(option) {
@@ -53,14 +53,6 @@ class BotEventManager extends ClientManager_1.default {
             }
         }
     }
-    addRawListener(listener, eventName) {
-        if (typeof listener !== 'function') {
-            throw new TypeError('type of listener is not function');
-        }
-        else {
-            this.client.on(eventName ?? listener.name, listener);
-        }
-    }
     addListener(listener, eventName) {
         if (typeof listener !== 'function') {
             throw new TypeError('type of listener is not function');
@@ -77,6 +69,14 @@ class BotEventManager extends ClientManager_1.default {
             }
         }
     }
+    addRawListener(listener, eventName) {
+        if (typeof listener !== 'function') {
+            throw new TypeError('type of listener is not function');
+        }
+        else {
+            this.client.on(eventName ?? listener.name, listener);
+        }
+    }
     removeListener(listener, eventName) {
         if (typeof listener !== 'function') {
             throw new TypeError('type of listener is not function');
@@ -88,7 +88,7 @@ class BotEventManager extends ClientManager_1.default {
             }
             else {
                 const foundIndex = (this._eventListeners[realEventName] ?? []).indexOf(listener);
-                if (-1 !== foundIndex) {
+                if (foundIndex !== -1) {
                     this._eventListeners[realEventName].splice(foundIndex, 1);
                 }
             }

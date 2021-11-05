@@ -5,21 +5,19 @@ const discord_js_1 = require("discord.js");
 var Bot_1 = require("./Bot");
 Object.defineProperty(exports, "Bot", { enumerable: true, get: function () { return Bot_1.default; } });
 exports.Ctx = require("./Ctx");
-function checkAny(...conditions) {
-    return (bot, listenerName) => {
-        const oldListener = bot[listenerName];
-        const newListener = (ctx) => {
-            for (const condition of conditions) {
-                if (condition.checker(ctx)) {
-                    oldListener(ctx);
-                }
+const checkAny = (...conditions) => (bot, listenerName) => {
+    const oldListener = bot[listenerName];
+    const newListener = (ctx) => {
+        for (const condition of conditions) {
+            if (condition.checker(ctx)) {
+                oldListener(ctx);
             }
-        };
-        bot[listenerName] = newListener;
+        }
     };
-}
+    bot[listenerName] = newListener;
+};
 exports.checkAny = checkAny;
-function check(checker) {
+const check = (checker) => {
     if (typeof checker !== 'function') {
         throw new TypeError('type of checker is not function');
     }
@@ -32,93 +30,84 @@ function check(checker) {
                 }
             };
             bot[listenerName] = newListener;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return
             return newListener; // ts(1241)
         };
         result.checker = checker;
         return result;
     }
-}
+};
 exports.check = check;
-function hasRole(roleResolvable) {
+const hasRole = (roleResolvable) => {
     if (typeof roleResolvable !== 'string') {
         throw new TypeError('type of roleResolvable is not string');
     }
     else {
-        return check(ctx => ctx.user instanceof discord_js_1.GuildMember && ctx.user.roles.cache.some(role => role.id === roleResolvable || role.name === roleResolvable));
+        return (0, exports.check)(ctx => ctx.user instanceof discord_js_1.GuildMember && ctx.user.roles.cache.some(role => role.id === roleResolvable || role.name === roleResolvable));
     }
-}
+};
 exports.hasRole = hasRole;
-function hasAnyRole(...roleResolvables) {
+const hasAnyRole = (...roleResolvables) => {
     if (!Array.isArray(roleResolvables)) {
         throw new TypeError('type of roleResolvables is not array');
     }
     else {
-        return checkAny(...roleResolvables.map(roleResolvable => hasRole(roleResolvable)));
+        return (0, exports.checkAny)(...roleResolvables.map(roleResolvable => (0, exports.hasRole)(roleResolvable)));
     }
-}
+};
 exports.hasAnyRole = hasAnyRole;
-function botHasRole(roleResolvable) {
-    return check(ctx => ctx.guild !== null && ctx.guild.me.roles.cache.has(roleResolvable));
-}
+const botHasRole = (roleResolvable) => (0, exports.check)(ctx => ctx.guild !== null && ctx.guild.me.roles.cache.has(roleResolvable));
 exports.botHasRole = botHasRole;
-function botHasAnyRole(...roleResolvables) {
+const botHasAnyRole = (...roleResolvables) => {
     if (!Array.isArray(roleResolvables)) {
         throw new TypeError('type of roleResolvables is not array');
     }
     else {
-        return checkAny(...roleResolvables.map(roleResolvable => botHasRole(roleResolvable)));
+        return (0, exports.checkAny)(...roleResolvables.map(roleResolvable => (0, exports.botHasRole)(roleResolvable)));
     }
-}
+};
 exports.botHasAnyRole = botHasAnyRole;
-function hasChannelPermissions(...permissions) {
+const hasChannelPermissions = (...permissions) => {
     if (!Array.isArray(permissions)) {
         throw new TypeError('type of permissions is not array');
     }
     else {
-        return check(ctx => ctx.user instanceof discord_js_1.GuildMember && ctx.channel.type !== 'DM' && ctx.channel.permissionsFor(ctx.user).has(permissions));
+        return (0, exports.check)(ctx => ctx.user instanceof discord_js_1.GuildMember && ctx.channel.type !== 'DM' && ctx.channel.permissionsFor(ctx.user).has(permissions));
     }
-}
+};
 exports.hasChannelPermissions = hasChannelPermissions;
-function hasGuildPermissions(...permissions) {
+const hasGuildPermissions = (...permissions) => {
     if (!Array.isArray(permissions)) {
         throw new TypeError('type of permissions is not array');
     }
     else {
-        return check(ctx => ctx.user instanceof discord_js_1.GuildMember && ctx.user.permissions.has(permissions));
+        return (0, exports.check)(ctx => ctx.user instanceof discord_js_1.GuildMember && ctx.user.permissions.has(permissions));
     }
-}
+};
 exports.hasGuildPermissions = hasGuildPermissions;
-function botHasChannelPermissions(...permissions) {
+const botHasChannelPermissions = (...permissions) => {
     if (!Array.isArray(permissions)) {
         throw new TypeError('type of permissions is not array');
     }
     else {
-        return check(ctx => ctx.channel.type !== 'DM' && ctx.channel.permissionsFor(ctx.guild.me).has(permissions));
+        return (0, exports.check)(ctx => ctx.channel.type !== 'DM' && ctx.channel.permissionsFor(ctx.guild.me).has(permissions));
     }
-}
+};
 exports.botHasChannelPermissions = botHasChannelPermissions;
-function botHasGuildPermissions(...permissions) {
+const botHasGuildPermissions = (...permissions) => {
     if (!Array.isArray(permissions)) {
         throw new TypeError('type of permissions is not array');
     }
     else {
-        return check(ctx => ctx.channel.type !== 'DM' && ctx.guild.me.permissions.has(permissions));
+        return (0, exports.check)(ctx => ctx.channel.type !== 'DM' && ctx.guild.me.permissions.has(permissions));
     }
-}
+};
 exports.botHasGuildPermissions = botHasGuildPermissions;
-function guildOnly() {
-    return check(ctx => ctx.guild !== null);
-}
+const guildOnly = () => (0, exports.check)(ctx => ctx.guild !== null);
 exports.guildOnly = guildOnly;
-function dmOnly() {
-    return check(ctx => ctx.guild === null);
-}
+const dmOnly = () => (0, exports.check)(ctx => ctx.guild === null);
 exports.dmOnly = dmOnly;
-function isOwner() {
-    return check(ctx => ctx.bot.isOwner(ctx.user instanceof discord_js_1.GuildMember ? ctx.user.user : ctx.user));
-}
+const isOwner = () => (0, exports.check)(ctx => ctx.bot.isOwner(ctx.user instanceof discord_js_1.GuildMember ? ctx.user.user : ctx.user));
 exports.isOwner = isOwner;
-function isNsfw() {
-    return check(ctx => ctx.channel.type === 'GUILD_TEXT' && ctx.channel.nsfw);
-}
+const isNsfw = () => (0, exports.check)(ctx => ctx.channel.type === 'GUILD_TEXT' && ctx.channel.nsfw);
 exports.isNsfw = isNsfw;

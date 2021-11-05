@@ -12,9 +12,7 @@ class WeakReadonlyArray {
             const iInIteration = i;
             if (iInIteration in this._array) { // must consider case that the index is empty
                 Object.defineProperty(this, iInIteration, {
-                    get: () => {
-                        return this._array[iInIteration];
-                    },
+                    get: () => this._array[iInIteration],
                 });
             }
         }

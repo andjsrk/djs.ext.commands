@@ -10,7 +10,6 @@ class SubSlash extends BaseSlash_1.default {
             argDefinitions: option.argDefinitions,
             callback: option.callback,
         });
-        this.type = 'subSlash';
         if (typeof option.for !== 'string') {
             throw new TypeError('type of for is not string');
         }
@@ -20,12 +19,13 @@ class SubSlash extends BaseSlash_1.default {
         else {
             this.for = option.for;
             this.mainCommand = option.mainCommand;
+            this.type = 'subSlash';
         }
     }
     toRawArray() {
-        return [this.name, ...this.aliases].map(aliase => ({
+        return [this.name, ...this.aliases].map(alias => ({
             type: 'SUB_COMMAND',
-            name: aliase,
+            name: alias,
             description: this.description ?? '-',
             options: [
                 ...this.argDefinitions.map(argPiece => {
@@ -34,9 +34,9 @@ class SubSlash extends BaseSlash_1.default {
                         type: argType.replace(/\?$/, '').toUpperCase(),
                         name: argPiece.name,
                         description: argPiece.description ?? '-',
-                        required: !argType.endsWith('?')
+                        required: !argType.endsWith('?'),
                     };
-                })
+                }),
             ],
         }));
     }

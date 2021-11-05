@@ -5,10 +5,11 @@ const Base_1 = require("./Base");
 class Interaction extends Base_1.default {
     constructor(option) {
         super({ bot: option.bot });
-        this.interaction = option.interaction;
-        this.guild = this.interaction.guild;
-        this.channel = this.interaction.channel;
-        this.user = this.interaction.member ?? this.interaction.user;
+        const { interaction } = option;
+        this.channel = interaction.channel;
+        this.guild = interaction.guild;
+        this.interaction = interaction;
+        this.user = interaction.member ?? interaction.user;
     }
     async send(content, option = {}) {
         const dSendOption = typeof content === 'string'
@@ -22,20 +23,19 @@ class Interaction extends Base_1.default {
             ? option
             : typeof content === 'object' && content !== null
                 ? content
-                : (() => { throw new TypeError(); })();
-        await this.interaction.reply(dSendOption);
-        const fetchedReply = await this.interaction.fetchReply();
-        const sentMsg = this.interaction.channel?.messages.cache.get(fetchedReply.id);
-        if (sentMsg !== undefined) {
+                : (() => { throw new TypeError('invalid type'); })();
+        const reply = await this.interaction.reply({ ...dSendOption, fetchReply: true });
+        const sentReply = this.interaction.channel?.messages.cache.get(reply.id);
+        if (sentReply !== undefined) {
             if (sendOption.deleteAfter !== undefined) {
-                setTimeout(() => {
-                    if (sentMsg.deletable) {
-                        sentMsg.delete();
+                setTimeout(async () => {
+                    if (sentReply.deletable) {
+                        await sentReply.delete();
                     }
                 }, sendOption.deleteAfter);
             }
         }
-        return sentMsg;
+        return sentReply;
     }
 }
 exports.default = Interaction;

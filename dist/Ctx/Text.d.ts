@@ -1,6 +1,9 @@
-import { Guild, GuildMember, Message, MessageEmbed, Role, TextChannel, User, VoiceChannel, MessageOptions, TextBasedChannels } from 'discord.js';
-import Base, { BaseCtxInitOption, MessageSendOption } from './Base';
-import TextCommand from '../Command/Text';
+import { MessageEmbed } from 'discord.js';
+import type { Guild, GuildMember, Message, Role, TextChannel, User, VoiceChannel } from 'discord.js';
+import type { MessageOptions, TextBasedChannels } from 'discord.js';
+import Base from './Base';
+import type { BaseCtxInitOption, MessageSendOption } from './Base';
+import type TextCommand from '../Command/Text';
 export declare type PureTextArgType = 'string' | 'number' | 'integer' | 'naturalNumber' | 'decimal' | 'boolean' | 'user' | 'member' | 'role' | 'channel' | 'textChannel' | 'voiceChannel';
 export declare type RestTextArgType = `...${PureTextArgType}`;
 export declare type TextArgTypeList = ReadonlyArray<PureTextArgType> | readonly [...ReadonlyArray<PureTextArgType>, RestTextArgType];
@@ -9,21 +12,22 @@ export declare type ParsedTextArgTypeList<A extends TextArgTypeList> = A extends
 export interface TextCtxInitOption extends BaseCtxInitOption {
     readonly message: Message;
     readonly command: TextCommand;
-    readonly matchedAliase: string;
+    readonly matchedAlias: string;
 }
 export default class Text<ArgTypeList extends TextArgTypeList = TextArgTypeList> extends Base {
-    readonly message: Message;
-    readonly command: TextCommand;
     readonly args: ParsedTextArgTypeList<ArgTypeList> extends never ? Array<any> : ParsedTextArgTypeList<ArgTypeList>;
     readonly channel: TextBasedChannels;
+    readonly command: TextCommand;
     readonly content: string;
     readonly guild: Guild | null;
-    readonly matchedAliase: string;
+    readonly matchedAlias: string;
     readonly me: GuildMember | User;
+    readonly message: Message;
+    readonly type: string;
     readonly user: GuildMember | User;
     constructor(option: TextCtxInitOption);
-    protected parseRawToArgs(raw: string): any[];
-    protected parseOneArg(argType: PureTextArgType, content: string): string | number | boolean | import("discord.js").GuildChannel | GuildMember | Role | import("discord.js").ThreadChannel | User | null;
+    protected _parseOneRawArg(argType: PureTextArgType, content: string): ParsedTextArgTypePiece<PureTextArgType> | null;
+    protected _parseRaw(raw: string): ParsedTextArgTypeList<ArgTypeList>;
     reply(content: string | MessageEmbed | MessageOptions): Promise<Message>;
     send(content: string | MessageEmbed, option?: MessageSendOption): Promise<Message>;
     send(option: MessageOptions & MessageSendOption): Promise<Message>;

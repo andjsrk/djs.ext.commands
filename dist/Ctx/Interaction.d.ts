@@ -1,15 +1,17 @@
-import { MessageComponentInteraction, CommandInteraction, Guild, GuildMember, Message, MessageEmbed, User, InteractionReplyOptions, TextBasedChannels } from 'discord.js';
-import Base, { BaseCtxInitOption, MessageSendOption } from './Base';
-export interface InteractionCtxInitOption extends BaseCtxInitOption {
-    readonly interaction: MessageComponentInteraction | CommandInteraction;
+import { MessageEmbed } from 'discord.js';
+import type { CommandInteraction, Guild, GuildMember, Message, MessageComponentInteraction, User } from 'discord.js';
+import type { InteractionReplyOptions, TextBasedChannels } from 'discord.js';
+import Base from './Base';
+import type { BaseCtxInitOption, MessageSendOption } from './Base';
+export interface InteractionCtxInitOption<T extends CommandInteraction | MessageComponentInteraction> extends BaseCtxInitOption {
+    readonly interaction: T;
 }
-export default abstract class Interaction extends Base {
-    readonly interaction: MessageComponentInteraction | CommandInteraction;
-    readonly guild: Guild | null;
+export default abstract class Interaction<T extends CommandInteraction | MessageComponentInteraction> extends Base {
     readonly channel: TextBasedChannels;
+    readonly guild: Guild | null;
+    readonly interaction: T;
     readonly user: GuildMember | User;
-    constructor(option: InteractionCtxInitOption);
-    abstract readonly type: string;
-    send(content: string | MessageEmbed, option?: MessageSendOption): Promise<Message>;
-    send(option: InteractionReplyOptions & MessageSendOption): Promise<Message>;
+    constructor(option: InteractionCtxInitOption<T>);
+    send(content: string | MessageEmbed, option?: MessageSendOption): Promise<Message | undefined>;
+    send(option: InteractionReplyOptions & MessageSendOption): Promise<Message | undefined>;
 }

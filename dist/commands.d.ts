@@ -1,57 +1,24 @@
-import { PermissionString, Snowflake } from 'discord.js';
-import Bot from './Bot';
-import * as Ctx from './Ctx';
+import type { PermissionString, Snowflake } from 'discord.js';
+import type Bot from './Bot';
+import type * as Ctx from './Ctx';
 export { default as Bot } from './Bot';
 export * as Ctx from './Ctx';
 declare type CtxArg = Ctx.Text | Ctx.Button | Ctx.SelectMenu | Ctx.Slash;
-export declare type EventListener = (ctx: CtxArg) => any;
-export declare type EventDecorator = ((target: Bot, propKey: string) => EventListener) & {
+export declare type EventListener = (ctx: CtxArg) => void;
+export declare type EventDecorator = ((bot: Bot, listenerName: string) => EventListener) & {
     checker: (ctx: CtxArg) => boolean;
 };
-export declare function checkAny(...conditions: Array<EventDecorator>): (bot: Bot, listenerName: string) => void;
-export declare function check(checker: (ctx: CtxArg) => boolean): {
-    (bot: Bot, listenerName: string): any;
-    checker: (ctx: CtxArg) => boolean;
-};
-export declare function hasRole(roleResolvable: Snowflake | string): {
-    (bot: Bot, listenerName: string): any;
-    checker: (ctx: CtxArg) => boolean;
-};
-export declare function hasAnyRole(...roleResolvables: Array<Snowflake | string>): (bot: Bot, listenerName: string) => void;
-export declare function botHasRole(roleResolvable: Snowflake | string): {
-    (bot: Bot, listenerName: string): any;
-    checker: (ctx: CtxArg) => boolean;
-};
-export declare function botHasAnyRole(...roleResolvables: Array<Snowflake | string>): (bot: Bot, listenerName: string) => void;
-export declare function hasChannelPermissions(...permissions: Array<PermissionString | bigint>): {
-    (bot: Bot, listenerName: string): any;
-    checker: (ctx: CtxArg) => boolean;
-};
-export declare function hasGuildPermissions(...permissions: Array<PermissionString | bigint>): {
-    (bot: Bot, listenerName: string): any;
-    checker: (ctx: CtxArg) => boolean;
-};
-export declare function botHasChannelPermissions(...permissions: Array<PermissionString | bigint>): {
-    (bot: Bot, listenerName: string): any;
-    checker: (ctx: CtxArg) => boolean;
-};
-export declare function botHasGuildPermissions(...permissions: Array<PermissionString | bigint>): {
-    (bot: Bot, listenerName: string): any;
-    checker: (ctx: CtxArg) => boolean;
-};
-export declare function guildOnly(): {
-    (bot: Bot, listenerName: string): any;
-    checker: (ctx: CtxArg) => boolean;
-};
-export declare function dmOnly(): {
-    (bot: Bot, listenerName: string): any;
-    checker: (ctx: CtxArg) => boolean;
-};
-export declare function isOwner(): {
-    (bot: Bot, listenerName: string): any;
-    checker: (ctx: CtxArg) => boolean;
-};
-export declare function isNsfw(): {
-    (bot: Bot, listenerName: string): any;
-    checker: (ctx: CtxArg) => boolean;
-};
+export declare const checkAny: (...conditions: Array<EventDecorator>) => (bot: Bot, listenerName: string) => void;
+export declare const check: (checker: (ctx: CtxArg) => boolean) => EventDecorator;
+export declare const hasRole: (roleResolvable: Snowflake | string) => EventDecorator;
+export declare const hasAnyRole: (...roleResolvables: Array<Snowflake | string>) => ReturnType<typeof checkAny>;
+export declare const botHasRole: (roleResolvable: Snowflake | string) => EventDecorator;
+export declare const botHasAnyRole: (...roleResolvables: Array<Snowflake | string>) => ReturnType<typeof checkAny>;
+export declare const hasChannelPermissions: (...permissions: Array<PermissionString | bigint>) => EventDecorator;
+export declare const hasGuildPermissions: (...permissions: Array<PermissionString | bigint>) => EventDecorator;
+export declare const botHasChannelPermissions: (...permissions: Array<PermissionString | bigint>) => EventDecorator;
+export declare const botHasGuildPermissions: (...permissions: Array<PermissionString | bigint>) => EventDecorator;
+export declare const guildOnly: () => EventDecorator;
+export declare const dmOnly: () => EventDecorator;
+export declare const isOwner: () => EventDecorator;
+export declare const isNsfw: () => EventDecorator;

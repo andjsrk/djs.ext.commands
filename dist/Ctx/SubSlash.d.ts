@@ -1,6 +1,7 @@
-import BaseSlash, { BaseSlashCtxInitOption, SlashArgTypeList } from './BaseSlash';
-import SlashCommand from '../Command/Slash';
-import SubSlashCommand from '../Command/SubSlash';
+import BaseSlash from './BaseSlash';
+import type { BaseSlashCtxInitOption, SlashArgTypeList } from './BaseSlash';
+import type SlashCommand from '../Command/Slash';
+import type SubSlashCommand from '../Command/SubSlash';
 export interface SlashCtxInitOption extends BaseSlashCtxInitOption {
     readonly mainCommand: SlashCommand;
 }
@@ -10,10 +11,10 @@ export interface SlashCtxInitOption extends BaseSlashCtxInitOption {
  * so cannot restrict cases like `[OptionalSlashArgType, PureSlashArgType]`.
  */
 export default class SubSlash<ArgTypeList extends SlashArgTypeList = SlashArgTypeList> extends BaseSlash<ArgTypeList> {
-    readonly mainCommand: SlashCommand;
     readonly command: SubSlashCommand;
     readonly group: string | null;
+    readonly mainCommand: SlashCommand;
     readonly name: string;
+    readonly type: string;
     constructor(option: SlashCtxInitOption);
-    readonly type = "subSlash";
 }

@@ -5,39 +5,19 @@ const Base_1 = require("./Base");
 class Text extends Base_1.default {
     constructor(option) {
         super({ bot: option.bot });
-        this.message = option.message;
+        const { message } = option;
+        this.channel = message.channel;
         this.command = option.command;
-        this.args = this.parseRawToArgs(this.message.content);
-        this.channel = this.message.channel;
-        this.content = this.message.content;
-        this.guild = this.message.guild;
-        this.matchedAliase = option.matchedAliase;
+        this.content = message.content;
+        this.guild = message.guild;
+        this.matchedAlias = option.matchedAlias;
         this.me = this.guild?.me ?? this.bot.client.user;
+        this.message = message;
+        this.type = 'text';
         this.user = this.message.member ?? this.message.author;
+        this.args = this._parseRaw(message.content);
     }
-    parseRawToArgs(raw) {
-        const args = [];
-        const rawArgs = raw.replace(`${this.bot.prefix}${this.matchedAliase}${this.command.argTypes.length !== 0 ? ' ' : ''}`, '').split(' ');
-        const isPureArgType = (argType) => !argType.startsWith('...');
-        for (const argType of this.command.argTypes) {
-            if (isPureArgType(argType)) {
-                const shifted = rawArgs.shift();
-                if (shifted === undefined) {
-                    args.push(null);
-                }
-                else {
-                    args.push(this.parseOneArg(argType, shifted));
-                }
-            }
-            else {
-                const pureArgType = argType.replace('...', '');
-                args.push(rawArgs.map(rawArg => this.parseOneArg(pureArgType, rawArg)));
-                break;
-            }
-        }
-        return args;
-    }
-    parseOneArg(argType, content) {
+    _parseOneRawArg(argType, content) {
         if (argType === 'string') {
             return content;
         }
@@ -56,7 +36,7 @@ class Text extends Base_1.default {
                 voiceChannel: /^<#([0-9]+)>$/,
             };
             const matched = content.match(regexp[argType]);
-            if (matched !== null && matched[0] !== undefined) {
+            if (matched?.[0] !== undefined) {
                 switch (argType) {
                     case 'number':
                         return Number(matched[0]);
@@ -79,12 +59,36 @@ class Text extends Base_1.default {
                         return this.message.guild?.channels.cache.filter(channel => channel.type === 'GUILD_TEXT').get(matched[1]) ?? null;
                     case 'voiceChannel':
                         return this.message.guild?.channels.cache.filter(channel => channel.type === 'GUILD_VOICE').get(matched[1]) ?? null;
+                    default:
+                        return null;
                 }
             }
             else {
                 return null;
             }
         }
+    }
+    _parseRaw(raw) {
+        const args = [];
+        const rawArgs = raw.replace(`${this.bot.prefix}${this.matchedAlias}${this.command.argTypes.length !== 0 ? ' ' : ''}`, '').split(' ');
+        const isPureArgType = (argType) => !argType.startsWith('...');
+        for (const argType of this.command.argTypes) {
+            if (isPureArgType(argType)) {
+                const shifted = rawArgs.shift();
+                if (shifted === undefined) {
+                    args.push(null);
+                }
+                else {
+                    args.push(this._parseOneRawArg(argType, shifted));
+                }
+            }
+            else {
+                const pureArgType = argType.replace('...', '');
+                args.push(rawArgs.map(rawArg => this._parseOneRawArg(pureArgType, rawArg)));
+                break;
+            }
+        }
+        return args;
     }
     async reply(content) {
         let repliedMessage;
@@ -114,9 +118,9 @@ class Text extends Base_1.default {
                 : (() => { throw new TypeError(); })();
         const sentMsg = await this.channel.send(dSendOption);
         if (sendOption.deleteAfter !== undefined) {
-            setTimeout(() => {
+            setTimeout(async () => {
                 if (sentMsg.deletable) {
-                    sentMsg.delete();
+                    await sentMsg.delete();
                 }
             }, sendOption.deleteAfter);
         }

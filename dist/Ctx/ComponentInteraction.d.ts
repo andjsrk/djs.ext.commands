@@ -1,11 +1,9 @@
-import { MessageComponentInteraction } from 'discord.js';
-import Interaction, { InteractionCtxInitOption } from './Interaction';
-export interface ComponentInteractionCtxInitOption extends InteractionCtxInitOption {
-    readonly interaction: MessageComponentInteraction;
+import type { MessageComponentInteraction } from 'discord.js';
+import Interaction from './Interaction';
+import type { InteractionCtxInitOption } from './Interaction';
+export interface ComponentInteractionCtxInitOption<T extends MessageComponentInteraction> extends InteractionCtxInitOption<T> {
 }
-export default abstract class ComponentInteraction extends Interaction {
-    abstract readonly interaction: MessageComponentInteraction;
+export default abstract class ComponentInteraction<T extends MessageComponentInteraction> extends Interaction<T> {
     readonly customId: string;
-    constructor(option: ComponentInteractionCtxInitOption);
-    abstract readonly type: string;
+    constructor(option: ComponentInteractionCtxInitOption<T>);
 }

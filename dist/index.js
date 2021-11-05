@@ -10,7 +10,6 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-// Bot, Ctx are exporting from ./commands
-__exportStar(require("./commands"), exports);
+__exportStar(require("./commands"), exports); // Bot, Ctx are exporting from here
 const commands = require("./commands");
 exports.default = commands;

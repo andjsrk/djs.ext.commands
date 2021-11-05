@@ -1,10 +1,10 @@
-import { SelectMenuInteraction } from 'discord.js';
-import ComponentInteraction, { ComponentInteractionCtxInitOption } from './ComponentInteraction';
-export interface SelectMenuCtxInitOption extends ComponentInteractionCtxInitOption {
+import type { SelectMenuInteraction } from 'discord.js';
+import ComponentInteraction from './ComponentInteraction';
+import type { ComponentInteractionCtxInitOption } from './ComponentInteraction';
+export interface SelectMenuCtxInitOption extends ComponentInteractionCtxInitOption<SelectMenuInteraction> {
 }
-export default class SelectMenu extends ComponentInteraction {
-    readonly interaction: SelectMenuInteraction;
+export default class SelectMenu extends ComponentInteraction<SelectMenuInteraction> {
     readonly selected: Array<string>;
+    readonly type: string;
     constructor(option: SelectMenuCtxInitOption);
-    readonly type = "selectMenu";
 }

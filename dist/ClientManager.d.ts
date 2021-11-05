@@ -7,7 +7,7 @@ export interface ClientManagerInitOption {
     readonly intents?: Array<IntentFlags>;
 }
 export default class ClientManager {
-    readonly client: Client;
     protected readonly _clientOption: ClientOption;
+    readonly client: Client;
     constructor(option: ClientManagerInitOption);
 }

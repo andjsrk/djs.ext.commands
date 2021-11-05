@@ -40,6 +40,7 @@ class Bot extends BotEventManager_1.default {
                 const commandDatas = this.commands.filter(command => command.type === 'slash').map(command => command.toRawArray()).flat(1);
                 if (commandDatas.length !== 0) {
                     for (const [_, guild] of this.client.guilds.cache) {
+                        // eslint-disable-next-line @typescript-eslint/no-floating-promises
                         guild.commands.set(commandDatas);
                     }
                 }
@@ -55,20 +56,13 @@ class Bot extends BotEventManager_1.default {
             }, 'guildCreate');
             this.addRawListener(message => {
                 this.cachedMessages['_array'].push(message);
-                for (const command of this.commands.filter(command => command.type === 'text')) {
-                    if (command.argTypes.length === 0) {
-                        const matchedAliase = [command.name, ...command.aliases].find(aliase => message.content === `${this.prefix}${aliase}`);
-                        if (matchedAliase !== undefined) {
-                            const textCommandCtx = new Ctx.Text({ bot: this, message, command, matchedAliase });
-                            command.callback(textCommandCtx);
-                        }
-                    }
-                    else {
-                        const matchedAliase = [command.name, ...command.aliases].find(aliase => message.content.startsWith(`${this.prefix}${aliase} `));
-                        if (matchedAliase !== undefined) {
-                            const textCommandCtx = new Ctx.Text({ bot: this, message, command, matchedAliase });
-                            command.callback(textCommandCtx);
-                        }
+                for (const command of this.commands.filter(commandItem => commandItem.type === 'text')) {
+                    const matchedAlias = [command.name, ...command.aliases].find(alias => command.argTypes.length === 0
+                        ? message.content === `${this.prefix}${alias}`
+                        : message.content.startsWith(`${this.prefix}${alias} `));
+                    if (matchedAlias !== undefined) {
+                        const textCommandCtx = new Ctx.Text({ bot: this, command, matchedAlias, message });
+                        command.callback(textCommandCtx);
                     }
                 }
             }, 'messageCreate');
@@ -85,15 +79,15 @@ class Bot extends BotEventManager_1.default {
                 }
                 else if (interaction.isCommand()) {
                     if (interaction.options.getSubcommand(false) === null) {
-                        for (const command of this.commands.filter(command => command.type === 'slash')) {
+                        for (const command of this.commands.filter(commandItem => commandItem.type === 'slash')) {
                             if ([command.name, ...command.aliases].includes(interaction.commandName)) {
-                                command.callback(new Ctx.Slash({ bot: this, interaction, command }));
+                                command.callback(new Ctx.Slash({ bot: this, command, interaction }));
                                 break;
                             }
                         }
                     }
                     else {
-                        for (const command of this.commands.filter(command => command.type === 'slash')) {
+                        for (const command of this.commands.filter(commandItem => commandItem.type === 'slash')) {
                             const foundSubCommand = command.subCommands.find(subCommand => [subCommand.name, ...subCommand.aliases].includes(interaction.commandName));
                             if (foundSubCommand !== undefined) {
                                 foundSubCommand.callback(new Ctx.SubSlash({ bot: this, interaction, mainCommand: command }));
@@ -104,11 +98,10 @@ class Bot extends BotEventManager_1.default {
                 }
             }, 'interactionCreate');
             // #endregion listener init
-            this.cachedMessages = new WeakReadonlyArray_1.default(...this.client.guilds.cache
-                .reduce((p, c) => p.concat(c.channels.cache
-                .filter(channel => channel.isText())
-                .reduce((_p, _c) => _p.concat([..._c.messages.cache.values()]), [])), []));
             this._eventWaiters = {};
+            this.cachedMessages = new WeakReadonlyArray_1.default(...this.client.guilds.cache
+                .reduce((p, c) => p.concat(c.channels.cache.filter(channel => channel.isText())
+                .reduce((_p, _c) => _p.concat([..._c.messages.cache.values()]), [])), []));
             this.commands ??= [];
             this.channels = [];
             this.emojis = [];
@@ -119,6 +112,23 @@ class Bot extends BotEventManager_1.default {
             this.users = [];
         }
     }
+    // #region decorator
+    static button(option = {}) {
+        return (bot, listenerName) => {
+            const listener = bot[listenerName];
+            bot.addListener(ctx => {
+                if (option.customId !== undefined) {
+                    if (ctx.customId === option.customId) {
+                        listener.call(ctx.bot, ctx);
+                    }
+                }
+                else {
+                    listener.call(ctx.bot, ctx);
+                }
+            }, 'buttonPress');
+        };
+    }
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
     static event(first, listenerName) {
         if (listenerName === undefined) {
             const eventName = first;
@@ -137,14 +147,19 @@ class Bot extends BotEventManager_1.default {
             }
         }
     }
-    static textCommand(option = {}) {
+    static selectMenu(option = {}) {
         return (bot, listenerName) => {
-            bot.addCommand(new Command.Text({
-                name: option.name ?? listenerName,
-                aliases: option.aliases ?? [],
-                argTypes: option.argTypes,
-                callback: bot[listenerName].bind(bot),
-            }));
+            const listener = bot[listenerName];
+            bot.addListener(ctx => {
+                if (option.customId !== undefined) {
+                    if (ctx.customId === option.customId) {
+                        listener.call(ctx.bot, ctx);
+                    }
+                }
+                else {
+                    listener.call(ctx.bot, ctx);
+                }
+            }, 'selectMenuSelect');
         };
     }
     static slashCommand(option = {}) {
@@ -183,34 +198,14 @@ class Bot extends BotEventManager_1.default {
             }
         };
     }
-    static button(option = {}) {
+    static textCommand(option = {}) {
         return (bot, listenerName) => {
-            const listener = bot[listenerName];
-            bot.addListener(ctx => {
-                if (option.customId !== undefined) {
-                    if (ctx.customId === option.customId) {
-                        listener.call(ctx.bot, ctx);
-                    }
-                }
-                else {
-                    listener.call(ctx.bot, ctx);
-                }
-            }, 'buttonPress');
-        };
-    }
-    static selectMenu(option = {}) {
-        return (bot, listenerName) => {
-            const listener = bot[listenerName];
-            bot.addListener(ctx => {
-                if (option.customId !== undefined) {
-                    if (ctx.customId === option.customId) {
-                        listener.call(ctx.bot, ctx);
-                    }
-                }
-                else {
-                    listener.call(ctx.bot, ctx);
-                }
-            }, 'selectMenuSelect');
+            bot.addCommand(new Command.Text({
+                name: option.name ?? listenerName,
+                aliases: option.aliases,
+                argTypes: option.argTypes,
+                callback: bot[listenerName].bind(bot),
+            }));
         };
     }
     // #endregion decorator
@@ -249,7 +244,7 @@ class Bot extends BotEventManager_1.default {
         return this.client.user;
     }
     absorbCommands(bot) {
-        if (!(bot.prototype instanceof Bot)) {
+        if (!(bot?.prototype instanceof Bot)) {
             throw new TypeError('target is not extending class Bot');
         }
         else {
@@ -289,26 +284,6 @@ class Bot extends BotEventManager_1.default {
             }
         }
     }
-    absorbCommandsSyncByPath(path) {
-        let imported;
-        try {
-            imported = require($path.isAbsolute(path) ? path : $path.join(process.cwd(), path));
-        }
-        catch (error) {
-            if (error.code === 'MODULE_NOT_FOUND') {
-                throw new Error(`no file found with path '${path}'`);
-            }
-            else {
-                throw error;
-            }
-        }
-        if (imported?.default === undefined) {
-            throw new TypeError('source file is not exporting class Bot');
-        }
-        else {
-            return this.absorbCommands(imported.default);
-        }
-    }
     async absorbCommandsByPath(path) {
         let imported;
         try {
@@ -326,7 +301,28 @@ class Bot extends BotEventManager_1.default {
             throw new TypeError('source file is not exporting class Bot');
         }
         else {
-            return this.absorbCommands(imported.default);
+            this.absorbCommands(imported.default);
+        }
+    }
+    absorbCommandsSyncByPath(path) {
+        let imported;
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            imported = require($path.isAbsolute(path) ? path : $path.join(process.cwd(), path));
+        }
+        catch (error) {
+            if (error.code === 'MODULE_NOT_FOUND') {
+                throw new Error(`no file found with path '${path}'`);
+            }
+            else {
+                throw error;
+            }
+        }
+        if (imported?.default === undefined) {
+            throw new TypeError('source file is not exporting class Bot');
+        }
+        else {
+            this.absorbCommands(imported.default);
         }
     }
     addCommand(command) {
@@ -364,7 +360,7 @@ class Bot extends BotEventManager_1.default {
         await invite.delete();
     }
     async fetchApplicationInfo() {
-        return await this.client.application?.fetch();
+        return await this.client.application?.fetch() ?? null;
     }
     isOwner(user) {
         return this.ownerId === user.id;

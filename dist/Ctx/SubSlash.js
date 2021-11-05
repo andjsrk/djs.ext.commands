@@ -9,12 +9,13 @@ const BaseSlash_1 = require("./BaseSlash");
 class SubSlash extends BaseSlash_1.default {
     constructor(option) {
         super({ bot: option.bot, interaction: option.interaction });
-        this.type = 'subSlash';
-        this.mainCommand = option.mainCommand;
+        const { mainCommand } = option;
         const commandName = this.interaction.options.getSubcommand();
-        this.command = this.mainCommand.subCommands.find(subCommand => [subCommand.name, ...subCommand.aliases].includes(commandName));
+        this.command = mainCommand.subCommands.find(subCommand => [subCommand.name, ...subCommand.aliases].includes(commandName));
+        this.mainCommand = mainCommand;
         this.group = this.interaction.options.getSubcommandGroup(false);
         this.name = commandName;
+        this.type = 'subSlash';
     }
 }
 exports.default = SubSlash;

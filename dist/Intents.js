@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IntentFlags = void 0;
+/* eslint-disable no-bitwise, @typescript-eslint/prefer-literal-enum-member */
 var IntentFlags;
 (function (IntentFlags) {
     IntentFlags[IntentFlags["GUILDS"] = 1] = "GUILDS";
@@ -19,3 +20,4 @@ var IntentFlags;
     IntentFlags[IntentFlags["DIRECT_MESSAGE_REACTIONS"] = 8192] = "DIRECT_MESSAGE_REACTIONS";
     IntentFlags[IntentFlags["DIRECT_MESSAGE_TYPING"] = 16384] = "DIRECT_MESSAGE_TYPING";
 })(IntentFlags = exports.IntentFlags || (exports.IntentFlags = {}));
+/* eslint-enable no-bitwise, @typescript-eslint/prefer-literal-enum-member */

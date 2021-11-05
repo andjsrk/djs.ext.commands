@@ -11,13 +11,13 @@ class Slash extends BaseSlash_1.default {
             argDefinitions: option.argDefinitions,
             callback: option.callback,
         });
-        this.type = 'slash';
         if (option.noSubCommand !== undefined && typeof option.noSubCommand !== 'boolean') {
             throw new TypeError('type of noSubCommand is not boolean');
         }
         else {
             this.noSubCommand = option.noSubCommand ?? true;
             this.subCommands = [];
+            this.type = 'slash';
         }
     }
     addSubCommand(subCommand) {
@@ -29,8 +29,8 @@ class Slash extends BaseSlash_1.default {
         }
     }
     toRawArray() {
-        return [this.name, ...this.aliases].map(aliase => ({
-            name: aliase,
+        return [this.name, ...this.aliases].map(alias => ({
+            name: alias,
             description: this.description ?? '-',
             options: [
                 ...this.subCommands.map(subCommand => subCommand.toRawArray()).flat(1),
@@ -40,10 +40,10 @@ class Slash extends BaseSlash_1.default {
                         type: argType.replace(/\?$/, '').toUpperCase(),
                         name: argPiece.name,
                         description: argPiece.description ?? '-',
-                        required: !argType.endsWith('?')
+                        required: !argType.endsWith('?'),
                     };
-                })
-            ]
+                }),
+            ],
         }));
     }
 }

@@ -19,7 +19,7 @@ class BaseSlash extends Base_1.default {
         else {
             if (option.argDefinitions !== undefined) {
                 const firstOptionalArgIndex = option.argDefinitions.findIndex(argDefinition => argDefinition.type.endsWith('?'));
-                if (-1 !== firstOptionalArgIndex && !option.argDefinitions.slice(firstOptionalArgIndex).every(argDefinition => argDefinition.type.endsWith('?'))) {
+                if (firstOptionalArgIndex !== -1 && !option.argDefinitions.slice(firstOptionalArgIndex).every(argDefinition => argDefinition.type.endsWith('?'))) {
                     throw new TypeError(`non optional argument ${option.argDefinitions.slice(firstOptionalArgIndex).find(argDefinition => !argDefinition.type.endsWith('?')).name} does not precede optional argument`);
                 }
                 else {
@@ -53,7 +53,7 @@ class BaseSlash extends Base_1.default {
                 }
             }
             this.description = option.description;
-            this.argDefinitions = [...(option.argDefinitions ?? [])];
+            this.argDefinitions = [...option.argDefinitions ?? []];
             this.callback = option.callback;
         }
     }
