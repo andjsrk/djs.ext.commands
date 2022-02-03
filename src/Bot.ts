@@ -85,8 +85,10 @@ export default class Bot extends BotEventManager {
 			this.addRawListener(emoji => {
 				this.emojis.push(emoji)
 			}, 'emojiCreate')
-			this.addRawListener(guild => {
+			this.addRawListener(async guild => {
 				this.guilds.push(guild)
+				const commandDatas = (this.commands.filter(command => command.type === 'slash') as Array<Command.Slash>).map(command => command.toRawArray()).flat(1)
+				await guild.commands.set(commandDatas)
 			}, 'guildCreate')
 			this.addRawListener(message => {
 				this.cachedMessages['_array'].push(message)
