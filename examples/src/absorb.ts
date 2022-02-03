@@ -16,9 +16,7 @@ class MyBot extends Bot {
 
 const bot = new MyBot({ prefix: '!' })
 
-;(async () => {
-	bot.absorbCommandsSyncByPath('absorb-source-path.ts')
-	bot.absorbCommands(ValueCommand)
-	// eslint-disable-next-line @typescript-eslint/no-floating-promises
-	bot.run(TOKEN)
-})()
+bot.absorbCommandsSyncByPath('absorb-source-path.ts')
+bot.absorbCommands(ValueCommand)
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+bot.run(TOKEN)
