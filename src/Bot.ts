@@ -73,10 +73,7 @@ export default class Bot extends BotEventManager {
 				}
 				const commandDatas = (this.commands.filter(command => command.type === 'slash') as Array<Command.Slash>).map(command => command.toRawArray()).flat(1)
 				if (commandDatas.length !== 0) {
-					for (const [ _, guild ] of this.client.guilds.cache) {
-						// eslint-disable-next-line @typescript-eslint/no-floating-promises
-						guild.commands.set(commandDatas)
-					}
+					this.client.application?.commands.set(commandDatas)
 				}
 			}, 'ready')
 			this.addRawListener(channel => {
@@ -87,8 +84,6 @@ export default class Bot extends BotEventManager {
 			}, 'emojiCreate')
 			this.addRawListener(async guild => {
 				this.guilds.push(guild)
-				const commandDatas = (this.commands.filter(command => command.type === 'slash') as Array<Command.Slash>).map(command => command.toRawArray()).flat(1)
-				await guild.commands.set(commandDatas)
 			}, 'guildCreate')
 			this.addRawListener(message => {
 				this.cachedMessages['_array'].push(message)
