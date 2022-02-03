@@ -15,7 +15,7 @@
 		"bot"
 	],
 	"scripts": {
-		"build": "tsc"
+		"build": "npm i && tsc && rmdir /S /Q node_modules && del /Q package-lock.json"
 	},
 	"devDependencies": {
 		"@typescript-eslint/eslint-plugin": "^4.33.0",
